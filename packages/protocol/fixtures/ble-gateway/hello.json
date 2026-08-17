@@ -1,0 +1,11 @@
+{
+  "protocol": "jglass/1",
+  "type": "gateway.hello",
+  "sessionId": "fixture-session-1",
+  "requestId": "fixture-request-1",
+  "sequence": 1,
+  "payload": {
+    "transport": "ble-gatt",
+    "role": "glass-central"
+  }
+}

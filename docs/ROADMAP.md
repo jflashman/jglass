@@ -4,14 +4,42 @@ The roadmap is ordered to produce a usable vertical slice before adding difficul
 
 ## Milestone 0: Baseline and reproducibility
 
-- [ ] Confirm ADB connectivity to stock XE24 from the chosen development host.
-- [ ] Record `adb shell getprop` fields needed for builds without committing the device serial.
-- [ ] Verify microphone recording, speaker playback, camera capture, Wi-Fi, Bluetooth Classic, and BLE behavior with minimal test apps.
-- [ ] Select and document the Android build toolchain that can reliably target API 19.
+- [x] Confirm ADB connectivity to stock XE24 from the chosen development host.
+- [x] Record `adb shell getprop` fields needed for builds without committing the device serial.
+- [x] Verify microphone recording, speaker playback, and tap interaction with a minimal diagnostic app.
+- [ ] Verify camera capture and Wi-Fi application transport with minimal diagnostic slices.
+- [ ] Verify Bluetooth Classic and BLE behavior with minimal diagnostic slices.
+  Classic pairing and profile-state reporting are verified; application BLE
+  discovery, GATT traffic, and reconnect behavior remain unverified.
+- [x] Select and document the Android build toolchain that can reliably target API 19.
 - [ ] Decide the bridge language/runtime based on a small audio round-trip spike.
-- [ ] Create repeatable build, lint, and test commands.
+- [x] Create repeatable build, lint, and test commands.
 
 Acceptance: a new Codex task can build and install a harmless diagnostic APK using documented commands.
+
+## Milestone 0.5: iPhone gateway feasibility
+
+- [x] Select a non-tethered iPhone companion gateway architecture.
+- [x] Define draft GATT roles, UUIDs, diagnostic messages, and safety bounds.
+- [x] Pair iPhone and Glass and identify the advertised audio routes: HFP is
+  selectable for calls; A2DP media is not offered.
+- [x] Test ordinary iPhone media while Glass is worn: it remains on the iPhone
+  speaker and Glass reports the media profile idle.
+- [x] Confirm HFP call audio reaches the Glass speaker. Microphone routing was
+  accepted as expected call behavior but was not independently isolated.
+- [ ] Test an iOS companion-owned full-duplex HFP audio session.
+- [ ] Create the minimal Xcode companion and perform foreground BLE enrollment.
+- [ ] Confirm a connected write wakes the background companion.
+- [ ] Measure reconnection after screen lock, suspension, process termination,
+  Bluetooth interruption, and app relaunch.
+- [ ] Relay a non-sensitive cellular-backed ping through the locked iPhone.
+- [ ] Measure compressed microphone upload throughput before selecting a codec.
+- [ ] Add enrollment authentication before sending real audio or actions.
+
+Acceptance: while away from Wi-Fi, invoke a non-sensitive diagnostic request on
+Glass, relay it through the nearby locked iPhone's cellular connection, and
+receive a response without enabling Personal Hotspot. Standard Bluetooth audio
+routing and reconnection limitations are documented from physical tests.
 
 ## Milestone 1: Local voice loop
 
