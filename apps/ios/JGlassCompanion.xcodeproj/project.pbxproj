@@ -1,0 +1,408 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		100000000000000000000001 /* JGlassCompanionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000001 /* JGlassCompanionApp.swift */; };
+		100000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000002 /* ContentView.swift */; };
+		100000000000000000000003 /* GatewayProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000003 /* GatewayProtocol.swift */; };
+		100000000000000000000004 /* BLEControlFraming.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000004 /* BLEControlFraming.swift */; };
+		100000000000000000000005 /* BLEGatewayPeripheral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000005 /* BLEGatewayPeripheral.swift */; };
+		100000000000000000000006 /* NetworkReachabilityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000006 /* NetworkReachabilityMonitor.swift */; };
+		100000000000000000000007 /* AudioRouteProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000007 /* AudioRouteProbe.swift */; };
+		100000000000000000000008 /* GatewayMessageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000008 /* GatewayMessageTests.swift */; };
+		100000000000000000000009 /* BLEControlFramingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000009 /* BLEControlFramingTests.swift */; };
+		10000000000000000000000A /* hello.json in Resources */ = {isa = PBXBuildFile; fileRef = 20000000000000000000000A /* hello.json */; };
+		10000000000000000000000B /* hello-ack.json in Resources */ = {isa = PBXBuildFile; fileRef = 20000000000000000000000B /* hello-ack.json */; };
+		10000000000000000000000C /* ping.json in Resources */ = {isa = PBXBuildFile; fileRef = 20000000000000000000000C /* ping.json */; };
+		10000000000000000000000D /* pong.json in Resources */ = {isa = PBXBuildFile; fileRef = 20000000000000000000000D /* pong.json */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		300000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 400000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 500000000000000000000001;
+			remoteInfo = JGlassCompanion;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		200000000000000000000001 /* JGlassCompanionApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JGlassCompanionApp.swift; sourceTree = "<group>"; };
+		200000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		200000000000000000000003 /* GatewayProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayProtocol.swift; sourceTree = "<group>"; };
+		200000000000000000000004 /* BLEControlFraming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEControlFraming.swift; sourceTree = "<group>"; };
+		200000000000000000000005 /* BLEGatewayPeripheral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEGatewayPeripheral.swift; sourceTree = "<group>"; };
+		200000000000000000000006 /* NetworkReachabilityMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkReachabilityMonitor.swift; sourceTree = "<group>"; };
+		200000000000000000000007 /* AudioRouteProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRouteProbe.swift; sourceTree = "<group>"; };
+		200000000000000000000008 /* GatewayMessageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayMessageTests.swift; sourceTree = "<group>"; };
+		200000000000000000000009 /* BLEControlFramingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEControlFramingTests.swift; sourceTree = "<group>"; };
+		20000000000000000000000A /* hello.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = hello.json; sourceTree = "<group>"; };
+		20000000000000000000000B /* hello-ack.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "hello-ack.json"; sourceTree = "<group>"; };
+		20000000000000000000000C /* ping.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ping.json; sourceTree = "<group>"; };
+		20000000000000000000000D /* pong.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = pong.json; sourceTree = "<group>"; };
+		20000000000000000000000E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		20000000000000000000000F /* JGlassCompanion.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JGlassCompanion.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		200000000000000000000010 /* JGlassCompanionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JGlassCompanionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		600000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		600000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		700000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				700000000000000000000002 /* JGlassCompanion */,
+				700000000000000000000003 /* JGlassCompanionTests */,
+				700000000000000000000004 /* ../../packages/protocol/fixtures/ble-gateway */,
+				700000000000000000000005 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		700000000000000000000002 /* JGlassCompanion */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000001 /* JGlassCompanionApp.swift */,
+				200000000000000000000002 /* ContentView.swift */,
+				200000000000000000000003 /* GatewayProtocol.swift */,
+				200000000000000000000004 /* BLEControlFraming.swift */,
+				200000000000000000000005 /* BLEGatewayPeripheral.swift */,
+				200000000000000000000006 /* NetworkReachabilityMonitor.swift */,
+				200000000000000000000007 /* AudioRouteProbe.swift */,
+				20000000000000000000000E /* Info.plist */,
+			);
+			path = JGlassCompanion;
+			sourceTree = "<group>";
+		};
+		700000000000000000000003 /* JGlassCompanionTests */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000008 /* GatewayMessageTests.swift */,
+				200000000000000000000009 /* BLEControlFramingTests.swift */,
+			);
+			path = JGlassCompanionTests;
+			sourceTree = "<group>";
+		};
+		700000000000000000000004 /* ../../packages/protocol/fixtures/ble-gateway */ = {
+			isa = PBXGroup;
+			children = (
+				20000000000000000000000A /* hello.json */,
+				20000000000000000000000B /* hello-ack.json */,
+				20000000000000000000000C /* ping.json */,
+				20000000000000000000000D /* pong.json */,
+			);
+			path = "../../packages/protocol/fixtures/ble-gateway";
+			sourceTree = "<group>";
+		};
+		700000000000000000000005 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				20000000000000000000000F /* JGlassCompanion.app */,
+				200000000000000000000010 /* JGlassCompanionTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		500000000000000000000001 /* JGlassCompanion */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 800000000000000000000002 /* Build configuration list for PBXNativeTarget "JGlassCompanion" */;
+			buildPhases = (
+				900000000000000000000001 /* Sources */,
+				600000000000000000000001 /* Frameworks */,
+				A00000000000000000000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = JGlassCompanion;
+			productName = JGlassCompanion;
+			productReference = 20000000000000000000000F /* JGlassCompanion.app */;
+			productType = "com.apple.product-type.application";
+		};
+		500000000000000000000002 /* JGlassCompanionTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 800000000000000000000003 /* Build configuration list for PBXNativeTarget "JGlassCompanionTests" */;
+			buildPhases = (
+				900000000000000000000002 /* Sources */,
+				600000000000000000000002 /* Frameworks */,
+				A00000000000000000000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B00000000000000000000001 /* PBXTargetDependency */,
+			);
+			name = JGlassCompanionTests;
+			productName = JGlassCompanionTests;
+			productReference = 200000000000000000000010 /* JGlassCompanionTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		400000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2660;
+				LastUpgradeCheck = 2660;
+				TargetAttributes = {
+					500000000000000000000001 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+					500000000000000000000002 = {
+						CreatedOnToolsVersion = 26.0;
+						TestTargetID = 500000000000000000000001;
+					};
+				};
+			};
+			buildConfigurationList = 800000000000000000000001 /* Build configuration list for PBXProject "JGlassCompanion" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 700000000000000000000001;
+			productRefGroup = 700000000000000000000005 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				500000000000000000000001 /* JGlassCompanion */,
+				500000000000000000000002 /* JGlassCompanionTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A00000000000000000000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00000000000000000000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				10000000000000000000000A /* hello.json in Resources */,
+				10000000000000000000000B /* hello-ack.json in Resources */,
+				10000000000000000000000C /* ping.json in Resources */,
+				10000000000000000000000D /* pong.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		900000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				100000000000000000000001 /* JGlassCompanionApp.swift in Sources */,
+				100000000000000000000002 /* ContentView.swift in Sources */,
+				100000000000000000000003 /* GatewayProtocol.swift in Sources */,
+				100000000000000000000004 /* BLEControlFraming.swift in Sources */,
+				100000000000000000000005 /* BLEGatewayPeripheral.swift in Sources */,
+				100000000000000000000006 /* NetworkReachabilityMonitor.swift in Sources */,
+				100000000000000000000007 /* AudioRouteProbe.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		900000000000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				100000000000000000000008 /* GatewayMessageTests.swift in Sources */,
+				100000000000000000000009 /* BLEControlFramingTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B00000000000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 500000000000000000000001 /* JGlassCompanion */;
+			targetProxy = 300000000000000000000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		C00000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		C00000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		C00000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = JGlassCompanion/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jflashman.jglass.companion;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		C00000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = JGlassCompanion/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jflashman.jglass.companion;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		C00000000000000000000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.jflashman.jglass.companion.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/JGlassCompanion.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/JGlassCompanion";
+			};
+			name = Debug;
+		};
+		C00000000000000000000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.jflashman.jglass.companion.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/JGlassCompanion.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/JGlassCompanion";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		800000000000000000000001 /* Build configuration list for PBXProject "JGlassCompanion" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C00000000000000000000001 /* Debug */,
+				C00000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		800000000000000000000002 /* Build configuration list for PBXNativeTarget "JGlassCompanion" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C00000000000000000000003 /* Debug */,
+				C00000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		800000000000000000000003 /* Build configuration list for PBXNativeTarget "JGlassCompanionTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C00000000000000000000005 /* Debug */,
+				C00000000000000000000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 400000000000000000000001 /* Project object */;
+}

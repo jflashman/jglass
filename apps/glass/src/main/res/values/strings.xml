@@ -16,10 +16,24 @@
     <string name="network_failed">LAN probe: unavailable</string>
     <string name="gateway_waiting">Gateway BLE: waiting</string>
     <string name="gateway_scanning">Gateway BLE: scanning (10 s)</string>
-    <string name="gateway_found">Gateway BLE: service found</string>
+    <string name="gateway_connecting">Gateway BLE: connecting</string>
+    <string name="gateway_discovering">Gateway BLE: discovering service</string>
+    <string name="gateway_subscribing">Gateway BLE: subscribing</string>
+    <string name="gateway_sending_hello">Gateway BLE: sending hello</string>
+    <string name="gateway_waiting_hello_ack">Gateway BLE: awaiting hello ack</string>
+    <string name="gateway_sending_ping">Gateway BLE: sending ping</string>
+    <string name="gateway_waiting_pong">Gateway BLE: awaiting pong</string>
+    <string name="gateway_pong_internet">Gateway BLE: pong / internet reachable</string>
+    <string name="gateway_pong_offline">Gateway BLE: pong / internet offline</string>
     <string name="gateway_not_found">Gateway BLE: service not found</string>
     <string name="gateway_bluetooth_off">Gateway BLE: Bluetooth off</string>
     <string name="gateway_ble_unavailable">Gateway BLE: unavailable</string>
     <string name="gateway_scan_failed">Gateway BLE: scan failed</string>
+    <string name="gateway_connection_failed">Gateway BLE: connection failed</string>
+    <string name="gateway_service_invalid">Gateway BLE: service invalid</string>
+    <string name="gateway_subscribe_failed">Gateway BLE: subscribe failed</string>
+    <string name="gateway_write_failed">Gateway BLE: write failed</string>
+    <string name="gateway_protocol_failed">Gateway BLE: protocol failed</string>
+    <string name="gateway_timed_out">Gateway BLE: timed out</string>
     <string name="footer">Audio stays in memory and is discarded after playback</string>
 </resources>

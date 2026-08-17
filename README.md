@@ -17,9 +17,15 @@ Apple Watch-equivalent iPhone integration is not assumed. Apple ANCS can expose 
 
 ## Status
 
-Planning and repository bootstrap. No production code or third-party code has been imported yet.
+Early diagnostic implementation. The stock-XE24 Glass app has been exercised on
+the physical device, and a provider-free iPhone companion baseline builds and
+passes its tests in the iOS Simulator. No production AI relay or third-party
+application code has been imported yet.
 
-Current milestone: prove a local-network, push-to-talk voice loop on stock XE24 before adding vision, remote access, wake words, or firmware changes.
+Current milestone: measure foreground/background GATT reliability and compressed
+BLE audio throughput. The physical Glass/iPhone pair has completed the bounded
+fragmented hello/ping exchange, while companion-owned HFP proved unusable for
+application audio.
 
 ## Repository map
 
@@ -28,7 +34,7 @@ Current milestone: prove a local-network, push-to-talk voice loop on stock XE24 
 |-- AGENTS.md                 Codex's authoritative repository instructions
 |-- apps/
 |   |-- glass/                Explorer Edition client (Android API 19/GDK)
-|   `-- ios/                  Optional future iPhone companion
+|   `-- ios/                  SwiftUI iPhone gateway diagnostic
 |-- services/
 |   `-- bridge/               Modern AI/audio/session bridge
 |-- packages/

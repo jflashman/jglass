@@ -9,8 +9,9 @@ The roadmap is ordered to produce a usable vertical slice before adding difficul
 - [x] Verify microphone recording, speaker playback, and tap interaction with a minimal diagnostic app.
 - [ ] Verify camera capture and Wi-Fi application transport with minimal diagnostic slices.
 - [ ] Verify Bluetooth Classic and BLE behavior with minimal diagnostic slices.
-  Classic pairing and profile-state reporting are verified; application BLE
-  discovery, GATT traffic, and reconnect behavior remain unverified.
+  Classic pairing, profile-state reporting, foreground application BLE service
+  discovery, and a fragmented GATT hello/ping round trip are verified; reconnect
+  behavior remains unverified.
 - [x] Select and document the Android build toolchain that can reliably target API 19.
 - [ ] Decide the bridge language/runtime based on a small audio round-trip spike.
 - [x] Create repeatable build, lint, and test commands.
@@ -27,8 +28,16 @@ Acceptance: a new Codex task can build and install a harmless diagnostic APK usi
   speaker and Glass reports the media profile idle.
 - [x] Confirm HFP call audio reaches the Glass speaker. Microphone routing was
   accepted as expected call behavior but was not independently isolated.
-- [ ] Test an iOS companion-owned full-duplex HFP audio session.
-- [ ] Create the minimal Xcode companion and perform foreground BLE enrollment.
+- [x] Test an iOS companion-owned full-duplex HFP audio session. The route-only
+  probe received no input buffers; active output caused iOS to fall back to the
+  phone microphone and receiver, so HFP is not the application audio path.
+- [x] Create the minimal Xcode companion and verify its provider-free target,
+  message handling, and BLE framing in the iOS Simulator.
+- [x] Perform foreground BLE service discovery on the physical iPhone and Glass
+  pair.
+- [x] Connect to the companion GATT service and complete a bounded fragmented
+  hello/ping exchange.
+- [ ] Add explicit enrollment.
 - [ ] Confirm a connected write wakes the background companion.
 - [ ] Measure reconnection after screen lock, suspension, process termination,
   Bluetooth interruption, and app relaunch.

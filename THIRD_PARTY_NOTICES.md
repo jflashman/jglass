@@ -2,6 +2,9 @@
 
 No third-party application source code or assets have been imported into JGlass yet.
 
+The iPhone companion diagnostic uses Apple system frameworks only and adds no
+third-party package or application code.
+
 Repository links in planning documents are references and do not indicate that
 their code has been incorporated.
 

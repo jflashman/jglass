@@ -1,40 +1,86 @@
 # JGlass iPhone companion
 
-The iPhone companion is the selected first mobile gateway. It provides an
-application-level relay rather than Personal Hotspot, Bluetooth PAN, or general
-internet tethering.
+This directory contains the first provider-free iPhone gateway diagnostic. It
+is a native SwiftUI application with no third-party dependencies, API keys,
+backend endpoint, enrollment identity, notification access, or persistent user
+data.
 
-Planned responsibilities:
+The diagnostic currently provides two explicit, user-controlled probes:
 
-- publish the JGlass BLE GATT service while the user enrolls Glass;
-- relay authenticated, bounded JGlass messages over the iPhone's normal Wi-Fi
-  or cellular connection;
-- keep provider and bridge credentials out of the APK;
-- expose explicit connection, microphone-transfer, and retention state;
-- route assistant speech through a companion-owned HFP session if the Xcode
-  spike confirms reliable full-duplex application audio; physical testing found
-  no ordinary A2DP media route to XE24;
-- restore BLE state where public iOS APIs allow it and clearly surface when the
-  user must reopen the app;
-- store enrollment identity in Keychain and support revocation.
+- a Core Bluetooth peripheral that advertises the draft JGlass GATT service and
+  exchanges only bounded `gateway.hello` and `gateway.ping` messages;
+- an `AVAudioSession` HFP route probe that discards microphone buffers
+  immediately and displays only route, format, buffer-count, and transient-level
+  diagnostics. Physical testing established that this is not a viable
+  application audio transport on stock XE24.
 
 The companion is not a universal notification reader. ANCS consumption belongs
 on Glass. Service-specific replies remain separate integrations using public,
 permitted APIs.
 
-## Xcode handoff gate
+## Requirements and build
 
-The following work requires macOS and Xcode and has not been implemented:
+The current checked baseline is Xcode 26.6 with the iOS 26.5 Simulator runtime.
+The deployment target is iOS 17. Open
+`JGlassCompanion.xcodeproj`, select the shared `JGlassCompanion` scheme, and
+choose a simulator or a signed physical iPhone target.
 
-- create and sign the iOS application target;
-- enable the `bluetooth-peripheral` background mode;
-- publish and advertise the GATT service in `../../packages/protocol/BLE_GATEWAY_V1.md`;
-- verify foreground enrollment, background writes, state restoration, and
-  reconnection on the owner's actual iPhone;
-- exercise an `AVAudioSession` play-and-record configuration over the verified
-  HFP call-audio route;
-- perform a cellular-backed ping and measure locked-phone latency.
+Command-line build:
 
-Do not write speculative Swift that cannot be compiled or exercised before the
-Xcode handoff. No paid Apple capability or service may be enabled without
-Joshua's approval.
+```sh
+xcodebuild \
+  -project apps/ios/JGlassCompanion.xcodeproj \
+  -scheme JGlassCompanion \
+  -sdk iphonesimulator \
+  -configuration Debug \
+  CODE_SIGNING_ALLOWED=NO \
+  build
+```
+
+Command-line tests:
+
+```sh
+xcodebuild \
+  -project apps/ios/JGlassCompanion.xcodeproj \
+  -scheme JGlassCompanion \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5' \
+  test
+```
+
+The simulator validates the UI, message processor, and 20-byte fragmentation,
+but does not implement BLE peripheral hardware or prove HFP routing.
+
+## Physical iPhone procedure
+
+No paid Apple capability is required for this probe. A free or paid development
+team may still be needed to sign the app for the owner's iPhone.
+
+1. In Xcode, select a development team and the paired iPhone, then build and run
+   the app. Accept Bluetooth and microphone permission only when each probe is
+   intentionally started.
+2. Tap **Start BLE Gateway**. From the existing Glass BLE diagnostic, start the
+   bounded JGlass connection probe. Confirm it progresses through discovery,
+   subscription, hello, and ping and ends with a pong result.
+3. With Glass paired as a call-audio device, tap **Start HFP Probe**. The probe
+   reproduces the measured failure mode for diagnostics; do not expect it to
+   provide application audio. Tap **Stop HFP Probe** when finished. No audio is
+   retained.
+4. Record service discovery behavior. Do not infer background reliability from
+   this foreground test.
+
+Background wake, restoration, reconnect behavior, screen-lock latency,
+cellular relay, authentication, and real audio transport remain separate
+physical-device milestones.
+
+Foreground BLE advertising, service discovery, GATT connection, characteristic
+discovery, downlink subscription, and the fragmented hello/ping exchange were
+verified on the physical iPhone 16 Pro and stock-XE24 Glass pair on 2026-08-17.
+The Glass display ended at `pong / internet reachable`; this result does not yet
+establish background or reconnect reliability.
+
+The companion-owned HFP experiment was also completed on the physical pair.
+iOS initially reported `BluetoothHFP` input/output and an 8 kHz mono Float32
+input format but delivered zero input buffers. Keeping output rendering active
+produced one silent transition buffer and changed the route to the iPhone's
+built-in microphone and receiver. HFP is therefore retained only as documented
+ordinary call behavior; compressed BLE is the application audio path to test.

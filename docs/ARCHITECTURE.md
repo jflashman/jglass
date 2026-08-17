@@ -90,11 +90,20 @@ This is application proxying, not Personal Hotspot or general IP tethering.
 
 Physical XE24/iPhone testing found asymmetric audio behavior: iOS offers Glass
 as a call-audio device, but ordinary iPhone media does not route to Glass and
-the Glass diagnostic reports no A2DP media connection. The first Xcode spike
-should therefore test whether a companion-owned play-and-record audio session
-can use the HFP route for full-duplex speech. BLE carries control, response
-text, progress, approvals, and compressed microphone data. Compressed audio
-over GATT remains the bounded fallback if the HFP application route is unusable.
+the Glass diagnostic reports no A2DP media connection. A companion-owned
+play-and-record spike could select Glass as HFP input and output but received no
+input buffers. Actively rendering output caused iOS to fall back to the phone's
+built-in microphone and receiver. HFP therefore remains available for ordinary
+calls but is not the JGlass application transport. BLE carries control,
+response text, progress, approvals, and bounded compressed audio in both
+directions.
+
+Foreground physical testing also verifies the selected GATT roles and control
+framing: Glass connected as the central, discovered both control
+characteristics, subscribed to the downlink, and completed fragmented
+hello/acknowledgement and ping/pong exchanges with the iPhone peripheral. This
+does not yet establish background wake, reconnection, authentication, or audio
+throughput.
 
 An iPhone companion cannot become a universal notification reader. Service-specific replies may require app intents, shortcuts, deep links, or service APIs and should be designed separately.
 

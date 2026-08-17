@@ -22,12 +22,16 @@ The current diagnostic app:
 - optionally probes an explicit bridge health URL without logging its body.
 - reports Bluetooth/BLE readiness, paired-device count, and headset/media
   connection state without displaying device names or addresses.
-- performs one bounded 10-second scan for only the public JGlass gateway service
-  UUID, retaining no device object, address, name, signal strength, or
-  advertisement payload.
+- performs one bounded 10-second BLE scan and software-matches only the public
+  JGlass gateway service UUID. Software matching avoids a verified XE24
+  platform-filter incompatibility with iOS 128-bit service advertisements.
+- transiently retains only the matched peripheral object long enough to connect,
+  discover the two control characteristics, subscribe to the downlink, and
+  exchange bounded `gateway.hello` and `gateway.ping` messages. It then closes
+  the connection without displaying or logging device identifiers.
 
-Camera, GDK gesture semantics, positive BLE discovery, and GATT traffic remain
-separate physical-device baseline tasks.
+Camera and GDK gesture semantics remain separate physical-device baseline tasks.
+The GATT exchange is implemented but still requires physical verification.
 
 ## Toolchain
 
@@ -76,8 +80,13 @@ adb shell am start -n com.jglass.diagnostic/.MainActivity \
 4. Confirm playback is intelligible and the UI returns to `READY`.
 5. Start another recording, leave the app, and confirm capture stops.
 6. If a health URL was supplied, confirm only reachability is displayed.
-7. Confirm the gateway line changes from `scanning` to `service not found` when
-   no foreground iPhone companion is publishing the JGlass service.
+7. In the foreground iPhone companion, start the BLE gateway and leave the app
+   visible while Glass scans.
+8. Confirm the Glass gateway line advances through connection, service
+   discovery, subscription, hello, and ping states, ending at either
+   `pong / internet reachable` or `pong / internet offline`.
+9. Confirm the iPhone reports a Glass subscription and receipt of the diagnostic
+   messages. Relaunch the Glass app to repeat the one-shot exchange.
 
 Do not use private speech during diagnostic testing. No recording is written to
 storage by the application.
@@ -86,7 +95,8 @@ storage by the application.
 
 Verified on 2026-08-17:
 
-- dependency-free Java buffer self-test passes on the Kali host;
+- dependency-free Java buffer, BLE advertisement, and control-framing self-tests
+  pass on the development host;
 - Android lint passes with zero errors;
 - the debug APK assembles and is API 19 compatible;
 - permissions are limited to `INTERNET`, `RECORD_AUDIO`, `BLUETOOTH`, and
@@ -108,14 +118,19 @@ Also verified on the physical device: Bluetooth Classic pairing to an iPhone 16
 Pro, bonded-device count, and idle headset/media profile reporting. iOS offered
 Glass as a voice-call output but not as an ordinary media output. Selecting the
 call route produced audio through Glass; microphone routing was not independently
-isolated. The filtered BLE gateway scan started, timed out after 10 seconds to
-the expected `service not found` state, preserved the phone bond, fit the card,
-and produced no runtime error. A positive service match cannot be tested until
-the iPhone companion exists.
+isolated. The bounded BLE gateway scan times out cleanly when no service exists.
+With the physical iPhone companion foregrounded and advertising, the corrected
+software-matched scan reports `service found`. XE24's platform-level UUID filter
+did not deliver that valid custom 128-bit iOS advertisement, so it is not used.
+The v0.3 diagnostic then connected, discovered both control characteristics,
+subscribed, exchanged the fragmented hello and ping messages, validated their
+responses, displayed `pong / internet reachable`, and closed the connection.
 
 Not yet verified on the physical device: cancellation while recording or
 playing, a real LAN health probe, camera capture, Wi-Fi transport behavior,
-Bluetooth HFP microphone isolation, a positive application BLE discovery, or
-GATT traffic.
+microphone isolation during an ordinary phone call, GATT behavior while the
+iPhone is backgrounded or locked, reconnection, or audio throughput. A
+companion-owned HFP session was tested separately and is not usable as the JGlass
+application audio path.
 
 If code is adapted from another project, complete the workflow in `../../docs/OPEN_SOURCE_POLICY.md` and update `../../THIRD_PARTY_NOTICES.md` in the same commit.
