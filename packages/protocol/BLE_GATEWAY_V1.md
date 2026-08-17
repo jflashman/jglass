@@ -53,17 +53,39 @@ The implementation must work with a 20-byte ATT application payload until the
 physical Glass/iPhone pair proves a larger negotiated MTU. Control JSON and
 binary audio therefore require fragmentation.
 
-The exact fragment header and window size remain deliberately undecided until
-the first Xcode-backed throughput spike. The chosen framing must provide:
+The Xcode-backed diagnostic uses this 10-byte header. All multi-byte integers
+are unsigned and big-endian.
 
-- protocol version and frame kind;
-- stream identifier;
-- monotonically increasing fragment sequence;
-- first and final fragment markers;
-- bounded reassembly size and timeout;
-- explicit cancellation;
-- backpressure rather than unbounded buffering;
-- duplicate detection for retried control messages.
+| Byte(s) | Field | Meaning |
+|---|---|---|
+| 0 | Magic | `0x4a` (`J`) |
+| 1 | Framing version | `0x01` |
+| 2 | Kind | `0x01` control, `0x02` cancel |
+| 3 | Flags | bit 0 first, bit 1 final; all other bits must be zero |
+| 4-5 | Stream ID | Non-persistent identifier selected by the sender |
+| 6-7 | Sequence | Zero-based fragment number within the stream |
+| 8-9 | Total length | Complete payload size on the first frame; zero otherwise |
+| 10+ | Payload | Fragment of the UTF-8 JSON control message |
+
+A sender splits control data into packets no larger than 20 bytes until a
+larger physical MTU is measured. The first fragment has sequence zero and the
+first flag; the last has the final flag. A single-frame message has both flags.
+A cancel frame has no payload, a zero total length, and the final flag.
+
+Each diagnostic receiver permits one incomplete inbound control stream, rejects
+out-of-order fragments, ignores already-accepted sequence numbers as
+duplicates, and expires an incomplete stream after five seconds. Reassembly is
+bounded to 4 KiB. Downlink indications are sent only while subscribed and pause
+when Core Bluetooth reports backpressure. This framing is versioned separately
+from the inner `jglass/1` JSON envelope and may change before sensitive traffic
+is enabled.
+
+The initial Glass client performs a one-shot exchange: it subscribes, sends
+`gateway.hello`, validates the matching acknowledgement, sends `gateway.ping`,
+validates the matching pong, reports the companion's network-reachability bit,
+and closes the GATT connection. It never sends credentials or user content.
+This exact 20-byte fragmented exchange was verified on the physical stock-XE24
+Glass and iPhone companion pair on 2026-08-17.
 
 The initial limits are:
 
@@ -77,10 +99,11 @@ These are safety bounds, not performance targets.
 ## Audio policy
 
 Physical testing found that stock XE24 is selectable as an iPhone call-audio
-device but not as an ordinary A2DP media output. The preferred speech path is
-therefore a companion-owned full-duplex HFP audio session, if the Xcode spike
-confirms that route. The audio-downlink characteristic is the fallback when an
-iOS application cannot reliably use HFP.
+device but not as an ordinary A2DP media output. A companion-owned HFP spike
+received no input buffers while the HFP route was selected; actively rendering
+output caused iOS to fall back to its built-in microphone and receiver. The
+compressed-audio GATT characteristics are therefore the selected application
+speech path in both directions.
 
 Microphone audio must be compressed before BLE transmission. The first device
 spike should test API 19's built-in AMR-WB and AAC encoders. Raw 16-bit PCM is

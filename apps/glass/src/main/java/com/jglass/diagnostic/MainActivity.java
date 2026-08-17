@@ -14,7 +14,7 @@ import java.util.Locale;
 
 public final class MainActivity extends Activity implements
         AudioLoopbackController.Listener,
-        BleGatewayScanner.Listener {
+        BleGatewayClient.Listener {
     public static final String EXTRA_BRIDGE_HEALTH_URL = "bridge_health_url";
 
     private static final int COLOR_READY = Color.rgb(67, 216, 255);
@@ -23,7 +23,7 @@ public final class MainActivity extends Activity implements
     private static final int COLOR_ERROR = Color.rgb(255, 138, 101);
 
     private AudioLoopbackController audio;
-    private BleGatewayScanner gatewayScanner;
+    private BleGatewayClient gatewayClient;
     private TextView stateView;
     private TextView instructionView;
     private TextView networkView;
@@ -35,7 +35,7 @@ public final class MainActivity extends Activity implements
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         audio = new AudioLoopbackController(this);
-        gatewayScanner = new BleGatewayScanner(this, this);
+        gatewayClient = new BleGatewayClient(this, this);
         setContentView(createContentView());
         showReady();
         beginLanProbe();
@@ -43,7 +43,7 @@ public final class MainActivity extends Activity implements
 
     @Override
     protected void onPause() {
-        gatewayScanner.stop();
+        gatewayClient.stop();
         audio.cancel();
         super.onPause();
     }
@@ -54,7 +54,7 @@ public final class MainActivity extends Activity implements
         if (bluetoothView != null) {
             bluetoothView.setText(BluetoothReadiness.summarize(this));
         }
-        gatewayScanner.start();
+        gatewayClient.start();
     }
 
     @Override
@@ -123,7 +123,7 @@ public final class MainActivity extends Activity implements
     }
 
     @Override
-    public void onGatewayScanStatus(final BleGatewayScanner.Status status) {
+    public void onGatewayStatus(final BleGatewayClient.Status status) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -135,9 +135,41 @@ public final class MainActivity extends Activity implements
                         gatewayView.setText(R.string.gateway_scanning);
                         gatewayView.setTextColor(Color.GRAY);
                         break;
-                    case FOUND:
-                        gatewayView.setText(R.string.gateway_found);
+                    case CONNECTING:
+                        gatewayView.setText(R.string.gateway_connecting);
                         gatewayView.setTextColor(COLOR_READY);
+                        break;
+                    case DISCOVERING:
+                        gatewayView.setText(R.string.gateway_discovering);
+                        gatewayView.setTextColor(COLOR_READY);
+                        break;
+                    case SUBSCRIBING:
+                        gatewayView.setText(R.string.gateway_subscribing);
+                        gatewayView.setTextColor(COLOR_READY);
+                        break;
+                    case SENDING_HELLO:
+                        gatewayView.setText(R.string.gateway_sending_hello);
+                        gatewayView.setTextColor(COLOR_READY);
+                        break;
+                    case WAITING_HELLO_ACK:
+                        gatewayView.setText(R.string.gateway_waiting_hello_ack);
+                        gatewayView.setTextColor(COLOR_READY);
+                        break;
+                    case SENDING_PING:
+                        gatewayView.setText(R.string.gateway_sending_ping);
+                        gatewayView.setTextColor(COLOR_READY);
+                        break;
+                    case WAITING_PONG:
+                        gatewayView.setText(R.string.gateway_waiting_pong);
+                        gatewayView.setTextColor(COLOR_READY);
+                        break;
+                    case PONG_INTERNET:
+                        gatewayView.setText(R.string.gateway_pong_internet);
+                        gatewayView.setTextColor(COLOR_READY);
+                        break;
+                    case PONG_OFFLINE:
+                        gatewayView.setText(R.string.gateway_pong_offline);
+                        gatewayView.setTextColor(COLOR_PLAYING);
                         break;
                     case NOT_FOUND:
                         gatewayView.setText(R.string.gateway_not_found);
@@ -149,6 +181,30 @@ public final class MainActivity extends Activity implements
                         break;
                     case BLE_UNAVAILABLE:
                         gatewayView.setText(R.string.gateway_ble_unavailable);
+                        gatewayView.setTextColor(COLOR_ERROR);
+                        break;
+                    case CONNECTION_FAILED:
+                        gatewayView.setText(R.string.gateway_connection_failed);
+                        gatewayView.setTextColor(COLOR_ERROR);
+                        break;
+                    case SERVICE_INVALID:
+                        gatewayView.setText(R.string.gateway_service_invalid);
+                        gatewayView.setTextColor(COLOR_ERROR);
+                        break;
+                    case SUBSCRIBE_FAILED:
+                        gatewayView.setText(R.string.gateway_subscribe_failed);
+                        gatewayView.setTextColor(COLOR_ERROR);
+                        break;
+                    case WRITE_FAILED:
+                        gatewayView.setText(R.string.gateway_write_failed);
+                        gatewayView.setTextColor(COLOR_ERROR);
+                        break;
+                    case PROTOCOL_FAILED:
+                        gatewayView.setText(R.string.gateway_protocol_failed);
+                        gatewayView.setTextColor(COLOR_ERROR);
+                        break;
+                    case TIMED_OUT:
+                        gatewayView.setText(R.string.gateway_timed_out);
                         gatewayView.setTextColor(COLOR_ERROR);
                         break;
                     case START_FAILED:

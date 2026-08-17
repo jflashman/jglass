@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-08-17
+- Amended: 2026-08-17 after physical BLE, GATT, and HFP testing
 
 ## Context
 
@@ -29,9 +30,10 @@ prove which audio roles work with an iPhone; physical pairing tests are required
   compressed microphone data, response text, progress, and approvals.
 - Glass will be the BLE central because Android API 19 supports that role. The
   iPhone companion will publish the JGlass GATT service as a BLE peripheral.
-- Prefer a companion-owned HFP session for assistant speech if the Xcode spike
-  confirms reliable full-duplex application audio. Ordinary A2DP media is not
-  available on the tested pair. BLE audio chunks remain the fallback.
+- Use bounded compressed BLE audio chunks for application speech in both
+  directions. Ordinary A2DP media is unavailable on the tested pair, and the
+  companion-owned HFP spike did not provide a stable full-duplex application
+  channel. HFP remains an ordinary phone-call profile only.
 - The iPhone will make authenticated outbound requests to the bridge over its
   normal Wi-Fi or cellular connection. Glass will never receive bridge or
   provider credentials.
@@ -51,8 +53,30 @@ During a voice call, however, iOS did offer Glass in the call-audio selector.
 Selecting it routed call audio through the Glass speaker. Microphone input was
 not independently isolated, although the call behaved normally and two-way HFP
 is an intended Glass function. This verifies pairing and call-audio output, but
-not yet a companion-owned audio session. No device address or pairing code is
-retained in the repository.
+not the microphone independently. No device address or pairing code is retained
+in the repository.
+
+The signed iPhone companion then tested a `.playAndRecord` / `.voiceChat`
+session on the same physical pair. In the first variant, iOS reported both input
+and output as `BluetoothHFP` with an 8 kHz, mono, Float32 planar input format,
+but `AVAudioEngine` delivered zero input buffers. In a second variant, a source
+node actively rendered silence and voice-processing I/O was disabled. The
+engine delivered one silent transition buffer, then iOS changed the routes to
+the phone's built-in microphone and receiver. Glass briefly displayed its call
+UI during each attempt and then returned home. This is sufficient evidence not
+to use HFP as the JGlass application audio transport on stock XE24.
+
+## Physical GATT findings
+
+On the same physical pair, the stock-XE24 Glass client discovered and connected
+to the foreground companion's custom peripheral service. It discovered the
+control characteristics, enabled downlink indications, fragmented and wrote a
+bounded `gateway.hello`, validated the matching acknowledgement, fragmented and
+wrote `gateway.ping`, and reassembled and validated the pong. The companion
+reported internet reachability, after which Glass closed the one-shot
+connection. This verifies the basic foreground GATT direction and 20-byte
+framing contract, but not enrollment, background wake, reconnection, cellular
+relay under lock, or audio throughput.
 
 ## Consequences
 
@@ -68,12 +92,9 @@ and service UUIDs move to an overflow area discoverable only by iOS scanners.
 Consequently, reconnect after a dropped background connection is a primary
 feasibility risk.
 
-An HFP application route would remove speech audio from the GATT data path, but
-the verified lack of A2DP means arbitrary iPhone media cannot be the downlink.
-The Xcode feasibility spike must test a companion-owned full-duplex HFP session.
-If it is unusable, the fallback is bounded, compressed, interruptible audio over
-BLE. That fallback must be measured for latency, battery, and stability before
-adoption.
+Both speech directions now remain on the GATT data path. Bounded, compressed,
+interruptible audio over BLE must be measured for throughput, latency, battery,
+and stability before a codec or chunk size is selected.
 
 The diagnostic BLE protocol is not authorized to carry sensitive audio or
 actions until an enrollment and application-layer authentication design is

@@ -50,9 +50,31 @@ to storage.
 Subsequent testing paired the unit with an iPhone 16 Pro, confirmed HFP call
 audio output and the absence of an A2DP media route, and ran a bounded filtered
 scan for the future JGlass BLE service. The scan timed out cleanly with no
-service present, as expected before an iPhone companion exists. Camera capture,
-Wi-Fi application transport, positive BLE service discovery/GATT traffic, and
-recording/playback cancellation remain unverified.
+service present, as expected before an iPhone companion existed. Camera capture,
+Wi-Fi application transport, and recording/playback cancellation remain
+unverified.
+
+On the macOS development host, Xcode 26.6 and the iOS 26.5 Simulator runtime
+successfully built, launched, and tested a provider-free SwiftUI companion
+diagnostic. It publishes the draft BLE peripheral service on supported hardware
+and includes an HFP route probe. Foreground BLE advertising and positive service
+discovery were subsequently verified on the physical iPhone/Glass pair. The
+companion-owned HFP experiment was also completed and ruled out that profile for
+application audio. A foreground GATT connection then completed characteristic
+discovery, downlink subscription, fragmented `gateway.hello`/ack and
+`gateway.ping`/pong exchanges, and a clean disconnect. The pong reported the
+iPhone's internet connection reachable. Background wake and reconnect behavior
+remain unverified.
+
+The first positive discovery attempt exposed an XE24 compatibility issue:
+Android 4.4's `startLeScan(UUID[], callback)` service filter did not deliver the
+valid custom 128-bit iOS advertisement, even though the Glass Bluetooth service
+saw nearby advertisements and a privacy-safe macOS Core Bluetooth probe matched
+the JGlass UUID. A corrected diagnostic uses a bounded unfiltered scan and
+software-matches only the public service UUID from advertisement fields. With
+that build installed, Glass reported `Gateway BLE: service found`. The app does
+not retain device objects, addresses, names, signal strength, or advertisement
+payloads.
 
 ### Recovery information
 
@@ -132,9 +154,9 @@ Several of the most attractive repositories have no declared license. Their beha
 - Start on a trusted local network.
 - Use an iPhone companion as the first away-from-home application gateway;
   do not use Personal Hotspot or general Bluetooth tethering as the product path.
-- Prefer the paired HFP call-audio route for assistant speech if an iOS
-  `AVAudioSession` test confirms full-duplex application audio. Physical testing
-  found no A2DP media route from the iPhone to stock XE24.
+- Use compressed BLE audio for assistant speech. Physical testing found no A2DP
+  media route, and a companion-owned HFP session either received no input
+  buffers or fell back to the phone when output rendering became active.
 - Start with push-to-talk and one-shot camera capture.
 - Add the Codex computer worker only after the ordinary assistant loop works.
 - Treat iPhone notification support as an independent experiment.
@@ -147,9 +169,6 @@ Several of the most attractive repositories have no declared license. Their beha
 - Whether XE24's native speech recognizer remains dependable without retired Google services.
 - Whether the Glass Android 4.4 BLE stack can maintain a reliable authorized ANCS session with the owner's current iPhone.
 - Which relay design can support use away from home without depending on modern TLS libraries on Glass.
-- Whether the selectable iPhone-to-XE24 HFP call route carries reliable
-  full-duplex speaker and microphone audio for a companion app. A2DP media
-  routing was tested and is not available on this stock XE24 pairing.
 - Whether a connected iPhone BLE peripheral service remains usable and can be
   reconnected after ordinary iOS backgrounding.
 - The eventual license for JGlass's original code.
