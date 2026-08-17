@@ -11,14 +11,15 @@ flowchart LR
     AI["OpenAI Responses API\nconversation · vision · tools"]
     TTS["ElevenLabs\nstreaming speech"]
     C["Codex worker\nrestricted workspaces"]
-    I["iPhone\nANCS + optional companion"]
+    I["iPhone companion\nBLE gateway · cellular · ANCS"]
     R["Optional authenticated relay\noutbound connections only"]
 
     G <--> B
     B <--> AI
     B <--> TTS
     B <--> C
-    I <-. "BLE notifications" .-> G
+    G <-. "BLE control/data\nBluetooth audio" .-> I
+    I <--> B
     B <-. "later, away from LAN" .-> R
     C <-. "later, away from LAN" .-> R
 ```
@@ -39,7 +40,7 @@ Responsibilities:
 
 Constraints:
 
-- Android API 19 and old TLS/runtime behavior;
+- Android 4.4.4 / API 19 on the verified XE24 unit, with old TLS/runtime behavior;
 - 640x360 display;
 - limited memory, battery, CPU, and thermal headroom;
 - discontinued Google services;
@@ -81,6 +82,19 @@ Two different mechanisms must not be conflated:
 
 1. Glass as an ANCS BLE client can request notification metadata and advertised actions from iOS.
 2. A project-owned iPhone companion can exchange JGlass-owned data and invoke APIs for which it has permission.
+
+The iPhone companion is also the selected mobile gateway. Glass remains the BLE
+central; the iPhone publishes a project-specific peripheral service and relays
+only authenticated JGlass traffic over its normal cellular or Wi-Fi connection.
+This is application proxying, not Personal Hotspot or general IP tethering.
+
+Physical XE24/iPhone testing found asymmetric audio behavior: iOS offers Glass
+as a call-audio device, but ordinary iPhone media does not route to Glass and
+the Glass diagnostic reports no A2DP media connection. The first Xcode spike
+should therefore test whether a companion-owned play-and-record audio session
+can use the HFP route for full-duplex speech. BLE carries control, response
+text, progress, approvals, and compressed microphone data. Compressed audio
+over GATT remains the bounded fallback if the HFP application route is unusable.
 
 An iPhone companion cannot become a universal notification reader. Service-specific replies may require app intents, shortcuts, deep links, or service APIs and should be designed separately.
 

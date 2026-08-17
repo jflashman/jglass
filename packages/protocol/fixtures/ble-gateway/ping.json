@@ -1,0 +1,8 @@
+{
+  "protocol": "jglass/1",
+  "type": "gateway.ping",
+  "sessionId": "fixture-session-1",
+  "requestId": "fixture-request-2",
+  "sequence": 2,
+  "payload": {}
+}

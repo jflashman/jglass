@@ -29,7 +29,7 @@ The preferred architecture keeps Glass thin. Glass captures voice or an intentio
 - Device: Google Glass Explorer Edition, XE-C / Explorer v3.
 - Firmware: official XE24, successfully flashed and booted.
 - Bootloader: unlocked.
-- OS baseline: Android 4.4.2 / API 19 with the Glass Development Kit behavior retained.
+- OS baseline: the connected XE24 unit reports Android 4.4.4 / API 19 (`XRH35`), with the Glass Development Kit behavior retained.
 - Reliable bootloader host: Kali Linux on a 2017 MacBook Air.
 - Windows ADB/recovery worked, but Windows Fastboot enumeration was unreliable. Do not assume Windows Fastboot works.
 

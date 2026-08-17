@@ -17,6 +17,27 @@ Before importing or adapting anything:
 
 If no license is declared, do not copy or closely translate the implementation. Ideas, observed behavior, public protocols, and requirements may inform a clean-room implementation, but do not use upstream source while writing the replacement.
 
+## Public visibility is not a software license
+
+A public GitHub repository is not automatically open source. GitHub's Terms of
+Service allow other users to view and fork public content through GitHub's
+functionality. They do not grant the general rights to copy, modify,
+redistribute, or create derivative works that an open-source license provides.
+GitHub's own licensing guidance states that, without a license, default
+copyright law applies and those broader rights remain reserved.
+
+Authoritative references:
+
+- https://docs.github.com/en/site-policy/github-terms/github-terms-of-service#5-license-grant-to-other-users
+- https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/licensing-a-repository
+- https://choosealicense.com/no-permission/
+
+Therefore JGlass may inspect an unlicensed public repository to understand
+externally observable behavior and requirements, but it must not copy,
+translate, or closely derive its implementation. Properly licensed repositories
+may be reused after the exact commit, file-level notices, dependency licenses,
+and required attribution are verified under the workflow above.
+
 ## Initial candidate inventory
 
 License metadata below was checked against the GitHub repository API on 2026-08-17. Recheck the exact commit before use; repositories can add or change licensing later.

@@ -2,7 +2,7 @@
 
 JGlass is a personal, experimental software project to turn a discontinued Google Glass Explorer Edition into a modern voice-and-vision interface for AI and remote computer work.
 
-The project starts from a real Google Glass XE-C running the official XE24 firmware with an unlocked bootloader. The immediate goal is not to force modern workloads onto decade-old hardware. Glass should be the lightweight microphone, camera, display, speaker, and gesture surface; a modern bridge service should perform AI inference, speech synthesis, authentication, and controlled computer delegation.
+The project starts from a real Google Glass XE-C running the official XE24 firmware (`XRH35`, Android 4.4.4 / API 19 as reported by the connected device) with an unlocked bootloader. The immediate goal is not to force modern workloads onto decade-old hardware. Glass should be the lightweight microphone, camera, display, speaker, and gesture surface; a modern bridge service should perform AI inference, speech synthesis, authentication, and controlled computer delegation.
 
 ## Intended experience
 

@@ -13,3 +13,12 @@ Requirements:
 - bounded payload sizes;
 - cancellation and interruption events;
 - no secrets in normal logs.
+
+## Current transport profiles
+
+- [BLE gateway draft 1](BLE_GATEWAY_V1.md): Glass-to-iPhone application relay,
+  diagnostic messages, GATT UUIDs, safety limits, and the security work required
+  before sensitive data is permitted.
+
+Canonical examples live in `fixtures/`. Fixtures contain synthetic identifiers
+only and must never be replaced with captured production traffic.

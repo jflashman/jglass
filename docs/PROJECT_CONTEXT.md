@@ -15,8 +15,44 @@ This is Joshua's personal project under the private GitHub repository `jflashman
 - Updated successfully to the official final XE24 image.
 - Bootloader was unlocked successfully with `fastboot oem unlock` on Kali Linux.
 - The device booted after flashing and appeared to be running the updated software.
-- Official Glass/GDK baseline is Android 4.4.2 / API 19.
+- The connected XE24 device reports Android 4.4.4 / API 19 (`XRH35`). Earlier
+  planning described the baseline as Android 4.4.2; the physical-device result
+  is authoritative for this unit.
 - The display is 640x360 and the hardware is thermally, computationally, and battery constrained.
+
+### Verified non-sensitive device baseline
+
+Observed over authorized ADB from Kali Linux on 2026-08-17:
+
+- product: Google Glass 1 / `glass-1`;
+- build: `XRH35`, user build, release keys;
+- runtime: Android 4.4.4 / API 19, ARMv7, OMAP4430, OpenGL ES 2.0;
+- display: 640x360 at 240 dpi;
+- memory: approximately 1.4 GiB total;
+- available `/data` space during the check: approximately 12.4 GiB;
+- declared features include microphone, camera, Wi-Fi, Bluetooth Classic, and BLE.
+- system clock synchronization is enabled; the timezone is manually fixed to
+  `America/New_York` because XE24 did not obtain a timezone from its retired
+  companion path. Automatic timezone is disabled to prevent reversion to GMT.
+
+The device serial, network identifiers, accounts, and captured user data were
+not recorded.
+
+### Verified diagnostic behavior
+
+On 2026-08-17, the first JGlass diagnostic APK was built on Kali, installed over
+ADB, and tested by Joshua while wearing the physical XE24 unit. The 640x360 card
+was visible, tap input started and stopped an in-memory 16 kHz mono recording,
+the recording state was visible, the spoken test phrase played through Glass as
+expected, and the app returned to its ready state. No captured audio was written
+to storage.
+
+Subsequent testing paired the unit with an iPhone 16 Pro, confirmed HFP call
+audio output and the absence of an A2DP media route, and ran a bounded filtered
+scan for the future JGlass BLE service. The scan timed out cleanly with no
+service present, as expected before an iPhone companion exists. Camera capture,
+Wi-Fi application transport, positive BLE service discovery/GATT traffic, and
+recording/playback cancellation remain unverified.
 
 ### Recovery information
 
@@ -94,6 +130,11 @@ Several of the most attractive repositories have no declared license. Their beha
 - Keep API keys off Glass.
 - Use a bridge service on a modern machine.
 - Start on a trusted local network.
+- Use an iPhone companion as the first away-from-home application gateway;
+  do not use Personal Hotspot or general Bluetooth tethering as the product path.
+- Prefer the paired HFP call-audio route for assistant speech if an iOS
+  `AVAudioSession` test confirms full-duplex application audio. Physical testing
+  found no A2DP media route from the iPhone to stock XE24.
 - Start with push-to-talk and one-shot camera capture.
 - Add the Codex computer worker only after the ordinary assistant loop works.
 - Treat iPhone notification support as an independent experiment.
@@ -106,4 +147,9 @@ Several of the most attractive repositories have no declared license. Their beha
 - Whether XE24's native speech recognizer remains dependable without retired Google services.
 - Whether the Glass Android 4.4 BLE stack can maintain a reliable authorized ANCS session with the owner's current iPhone.
 - Which relay design can support use away from home without depending on modern TLS libraries on Glass.
+- Whether the selectable iPhone-to-XE24 HFP call route carries reliable
+  full-duplex speaker and microphone audio for a companion app. A2DP media
+  routing was tested and is not available on this stock XE24 pairing.
+- Whether a connected iPhone BLE peripheral service remains usable and can be
+  reconnected after ordinary iOS backgrounding.
 - The eventual license for JGlass's original code.
