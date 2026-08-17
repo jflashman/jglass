@@ -1,0 +1,5 @@
+# Conservative defaults for this trusted personal project.
+# Provider credentials and user-specific model choices belong in ~/.codex,
+# not in this repository.
+approval_policy = "on-request"
+default_permissions = ":workspace"

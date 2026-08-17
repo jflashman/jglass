@@ -1,0 +1,59 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.mobileprovision
+secrets/
+
+# Captured personal/device data
+captures/
+recordings/
+notifications/
+device-data/
+*.wav
+*.pcm
+
+# Android / Gradle
+.gradle/
+**/build/
+local.properties
+*.apk
+*.aab
+*.jks
+*.keystore
+
+# Node / TypeScript
+node_modules/
+dist/
+coverage/
+.turbo/
+.pnpm-store/
+
+# Python experiments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Apple tooling
+.build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Codex local logs and scratch output
+.codex-log/
+.codex-work/
