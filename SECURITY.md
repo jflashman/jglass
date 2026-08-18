@@ -22,6 +22,25 @@ Do not expose raw SSH, VNC, ADB, the bridge development server, or a Codex worke
 
 Firmware flashing, partition erasure, rooting, recovery replacement, and bootloader operations can brick or wipe irreplaceable hardware. They require explicit approval and a verified recovery path.
 
+## Android build tooling
+
+The Glass APK has no third-party runtime dependencies. Android Gradle Plugin
+8.13.2 does, however, resolve host-side libraries used by its build, signing,
+lint, gRPC, and Unified Test Platform tooling. Security floors in the root
+`build.gradle.kts` keep the alerting transitive families at patched versions:
+
+- Netty `4.1.136.Final`;
+- Bouncy Castle `1.80.2`;
+- jose4j `0.9.6`;
+- JDOM `2.0.6.1`;
+- protobuf Java/Kotlin `3.25.5`.
+
+These libraries run on the development or CI host and are not packaged into the
+API 19 APK. Keep the overrides narrowly scoped to the root buildscript and AGP's
+isolated Unified Test Platform configurations. Re-audit them whenever AGP is
+upgraded, and remove an override only after the resolved dependency graph and
+GitHub alerts both confirm the upstream toolchain is patched.
+
 ## Reporting
 
 While the repository is private, document suspected vulnerabilities in a private GitHub issue without including live secrets or personal captured data.
