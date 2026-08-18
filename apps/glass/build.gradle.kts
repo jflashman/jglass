@@ -10,8 +10,8 @@ android {
         applicationId = "com.jglass.diagnostic"
         minSdk = 19
         targetSdk = 19
-        versionCode = 3
-        versionName = "0.3.0"
+        versionCode = 5
+        versionName = "0.5.0"
     }
 
     compileOptions {

@@ -38,6 +38,25 @@ Observed over authorized ADB from Kali Linux on 2026-08-17:
 The device serial, network identifiers, accounts, and captured user data were
 not recorded.
 
+On 2026-08-18, a read-only inventory confirmed that stock XE24 stores its boot
+branding in `/system/media/bootanimation.zip` as a single 640×360 `GLASS` PNG.
+The production build is not rooted and mounts `/system` read-only. A deterministic
+JGlass animation and a patched copy of the official sparse system image were
+built and verified by expand/check/extract/byte-compare on the macOS host. The
+official archive SHA-1 matched the published value. On 2026-08-18, the patched
+system image was physically flashed with Fastboot 37.0.1 using an explicit 64
+MiB sparse limit. All ten send/write pairs reported `OKAY`, and the command
+exited successfully after 103.8 seconds. An initial unbounded attempt had
+stalled before reporting any send/write stage and left the stock system intact
+after a physical restart. This macOS/Fastboot combination also stalls waiting
+for the final reboot acknowledgement. After a physical power cycle, the unit
+booted successfully. The owner observed the original `GLASS` phase, including
+the illuminated A, for a few seconds before the new animated `JGLASS` system
+phase replaced it and accepted that result for this milestone. The initial
+phase's storage location has not been verified and must not be described as a
+system-partition asset without further evidence. The established Kali host
+remains the fallback for bootloader recovery.
+
 ### Verified diagnostic behavior
 
 On 2026-08-17, the first JGlass diagnostic APK was built on Kali, installed over
@@ -63,8 +82,36 @@ companion-owned HFP experiment was also completed and ruled out that profile for
 application audio. A foreground GATT connection then completed characteristic
 discovery, downlink subscription, fragmented `gateway.hello`/ack and
 `gateway.ping`/pong exchanges, and a clean disconnect. The pong reported the
-iPhone's internet connection reachable. Background wake and reconnect behavior
-remain unverified.
+iPhone's internet connection reachable.
+
+A v0.4 Glass reliability diagnostic is now implemented for those open questions.
+An explicit ADB launch mode can either retain one connection for five delayed
+pings or run five bounded rediscovery/reconnection cycles after an initial
+exchange. The companion displays ephemeral subscription, message, restoration,
+and relative-time counters. All ten iOS tests pass in the iPhone 17 Pro / iOS
+26.5 Simulator, and the pure-Java reliability coordinator tests pass under JDK
+21. The primary macOS host's existing Homebrew SDK contains Platform 35, Build
+Tools 35.0.0, and platform-tools; the checked-in helpers now discover that SDK
+and Homebrew OpenJDK 21. Android lint and the v0.4 APK build pass there. Version
+0.4.0 installed and launched on the physical XE24 unit, remained the resumed
+activity, and produced no fatal exception in the ADB smoke check. Joshua then
+confirmed that the complete v0.4 card and two-line probe status fit the physical
+display and that recording/playback still worked.
+
+The foreground v0.2 companion reported one subscription, two messages, and no
+restoration for a successful one-shot exchange. With the same connection held
+open, the initial exchange plus five 15-second delayed pings all completed while
+the iPhone remained locked (`connected-wake 6/6`); the companion reported a clean
+unsubscribe afterward. Reconnect behaved differently: after one foreground
+success, all five rediscovery attempts under lock ended `not_found`. Starting a
+new run while the companion was ordinarily backgrounded and unlocked ended
+`reconnect 0/6 last=not_found`, with no new subscription, message, or restoration
+events. This verifies background wake on an established link and demonstrates a
+background rediscovery failure on this physical pair. Bluetooth interruption,
+force-quit, and manual-relaunch recovery were not completed.
+
+The complete result table and exact resume checklist are recorded in
+[`testing/2026-08-18-ble-reliability.md`](testing/2026-08-18-ble-reliability.md).
 
 The first positive discovery attempt exposed an XE24 compatibility issue:
 Android 4.4's `startLeScan(UUID[], callback)` service filter did not deliver the
@@ -106,6 +153,15 @@ fastboot erase userdata
 This is recovery context, not permission to flash again. Never perform destructive device operations without explicit approval in the active task.
 
 ### Host behavior discovered during recovery
+
+- The Apple Silicon macOS machine is now the primary application-development
+  host for JGlass. Its Homebrew JDK 21 and Android command-line SDK can build,
+  lint, install, and launch the API 19 diagnostic.
+- Kali remains the known-reliable host for complete firmware and recovery
+  operations. The macOS host completed the branding-only system flash when
+  Fastboot 37.0.1 was given `-S 64M`, but its unbounded flash negotiation and
+  final reboot acknowledgement both stalled. Keep Kali as the fallback rather
+  than generalizing this one successful, explicitly chunked system write.
 
 - Windows ADB worked in normal Android and recovery sideload mode.
 - Windows Fastboot repeatedly failed to enumerate the Glass bootloader despite USB driver work.
@@ -170,10 +226,16 @@ Several of the most attractive repositories have no declared license. Their beha
 - Add the Codex computer worker only after the ordinary assistant loop works.
 - Treat iPhone notification support as an independent experiment.
 - Revisit rooted AOSP 5.1.1 only if measured XE24 limitations block the project.
+- Keep the XE24 firmware and signed system applications, but replace the stock
+  boot animation through a reversible patched official system image. Do not root
+  or live-remount the device for branding.
+- Use a minimal Node/TypeScript trusted-LAN startup bridge with Open-Meteo and
+  ElevenLabs before broad assistant orchestration.
 
 ## Questions still open
 
-- Whether the first bridge should be TypeScript-only or split TypeScript orchestration from a Python speech worker.
+- Whether later bridge workloads justify splitting the implemented TypeScript
+  service from a separate speech worker.
 - Which audio codec gives acceptable latency and API 19 compatibility.
 - Whether XE24's native speech recognizer remains dependable without retired Google services.
 - Whether the Glass Android 4.4 BLE stack can maintain a reliable authorized ANCS session with the owner's current iPhone.

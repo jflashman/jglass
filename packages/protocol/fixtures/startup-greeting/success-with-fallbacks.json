@@ -1,0 +1,19 @@
+{
+  "protocol": "jglass/startup/1",
+  "greetingDate": "2026-08-18",
+  "period": "morning",
+  "spokenText": "Good morning, sir. Nearby, it is partly cloudy and 72 degrees.",
+  "weather": {
+    "summary": "Partly cloudy · 72°F · H 78° / L 60° · Rain 35%",
+    "attribution": "Weather data by Open-Meteo.com"
+  },
+  "audio": { "mimeType": "audio/mpeg", "dataBase64": "SUQzAQ==" },
+  "fallbackAssets": {
+    "version": "fallback-en-US-v1",
+    "clips": {
+      "morning": { "mimeType": "audio/mpeg", "dataBase64": "SUQzAQ==" },
+      "afternoon": { "mimeType": "audio/mpeg", "dataBase64": "SUQzAg==" },
+      "evening": { "mimeType": "audio/mpeg", "dataBase64": "SUQzAw==" }
+    }
+  }
+}

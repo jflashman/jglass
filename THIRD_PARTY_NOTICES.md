@@ -1,7 +1,5 @@
 # Third-party notices
 
-No third-party application source code or assets have been imported into JGlass yet.
-
 The iPhone companion diagnostic uses Apple system frameworks only and adds no
 third-party package or application code.
 
@@ -13,6 +11,37 @@ APK.
 
 Repository links in planning documents are references and do not indicate that
 their code has been incorporated.
+
+## Kartik Gupta J.A.R.V.I.S loader screen
+
+- Upstream: https://codepen.io/Kartik-Gupta-the-typescripter/pen/PorbjBV
+- Revision: CodePen does not expose a Git commit for this Pen. HTML and CSS were
+  retrieved from the public editor on 2026-08-18 and canonically joined as
+  `HTML + "\n---CSS---\n" + CSS`.
+- Retrieved editor export SHA-256:
+  `22c31ae98eb1b50f6ef2f9e78d7ff3a6cef5e2cdd818db6aabfeab2d7b0d5f6b`
+- License: MIT; CodePen applies MIT to public Pens. Preserved text:
+  `firmware/xe24/branding/LICENSE-KARTIK-GUPTA-LOADER.txt`
+- Copyright: Copyright (c) 2023 Kartik Gupta
+- Used in: `apps/glass/src/main/java/com/jglass/diagnostic/StartupLoaderView.java`
+  and `firmware/xe24/branding/BootAnimationGenerator.java`
+- Material used: concentric 344-coordinate SVG ring proportions, cyan/yellow
+  palette, segmented arcs, and 7/4/3/2-second alternating rotations.
+- Modifications: reimplemented with dependency-free Android `Canvas` and Java2D;
+  simplified SVG masks into stroked arcs, added explicit counter-rotation,
+  scaled for 640×360, removed hover behavior, and added original JGlass text.
+- Verification date: 2026-08-18
+
+## Open-Meteo weather data
+
+- Upstream: https://open-meteo.com/
+- License: CC-BY-4.0, https://open-meteo.com/en/license
+- Used in: runtime weather summaries from `services/bridge/`
+- Material used: current/daily forecast data only; no source or assets copied
+- Attribution displayed on Glass: `Weather data by Open-Meteo.com`
+- Modifications: temperatures are requested in Fahrenheit and values are rounded
+  into a compact spoken/visual summary.
+- Verification date: 2026-08-18
 
 ## Gradle Wrapper 8.13
 

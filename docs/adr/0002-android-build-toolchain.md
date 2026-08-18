@@ -2,14 +2,16 @@
 
 - Status: Accepted
 - Date: 2026-08-17
+- Updated: 2026-08-18
 
 ## Context
 
-The physical Glass XE24 device reports Android 4.4.4 / API 19. The Kali
-development host has ADB and several JDKs but no complete Android SDK platform
-or Gradle installation. Relying on obsolete global build tools would make the
-prototype difficult to reproduce on the eventual Linux VM and would expose the
-build to known toolchain defects.
+The physical Glass XE24 device reports Android 4.4.4 / API 19. The project began
+on a Kali host, but the Apple Silicon macOS machine is now the primary
+application-development host. Kali remains the known-reliable bootloader and
+firmware-recovery host. Relying on obsolete global build tools would make the
+prototype difficult to reproduce and would expose the build to known toolchain
+defects.
 
 The client must remain runnable on API 19 even when it is compiled with a
 maintained toolchain. The first diagnostic slice does not require the GDK and
@@ -19,8 +21,10 @@ must not pull in AndroidX or community Glass code.
 
 - Use Java for the Glass client.
 - Pin Android Gradle Plugin 8.13.2 and Gradle 8.13.
-- Run Gradle with JDK 21 on the current Kali host. JDK 17 is the documented
-  minimum for this AGP line and is also acceptable on another Linux host.
+- Run Gradle with Homebrew OpenJDK 21 on the primary macOS host or JDK 21 on the
+  Kali host. JDK 17 through 23 remains compatible with the selected Gradle line.
+- On Homebrew macOS, discover the keg-only JDK and command-line-tools SDK roots
+  in the checked-in helper without requiring a committed `local.properties`.
 - Compile against Android API 35 while keeping both `minSdk` and `targetSdk` at
   API 19. Android lint remains enabled to detect accidental use of newer APIs.
 - Commit and verify the Gradle wrapper so developers do not need a global

@@ -6,6 +6,10 @@ repo_dir=$(CDPATH= cd -- "$script_dir/../../.." && pwd)
 
 if [ -n "${JGLASS_JAVA_HOME:-}" ]; then
     java_home=$JGLASS_JAVA_HOME
+elif [ -x /opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home/bin/java ]; then
+    java_home=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
+elif [ -x /usr/local/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home/bin/java ]; then
+    java_home=/usr/local/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
 elif [ -x /usr/lib/jvm/java-21-openjdk-amd64/bin/java ]; then
     java_home=/usr/lib/jvm/java-21-openjdk-amd64
 elif [ -x /usr/lib/jvm/java-17-openjdk-amd64/bin/java ]; then
@@ -23,5 +27,13 @@ fi
 
 JAVA_HOME=$java_home
 export JAVA_HOME
+
+if [ -z "${ANDROID_HOME:-}" ] && [ -d /opt/homebrew/share/android-commandlinetools ]; then
+    ANDROID_HOME=/opt/homebrew/share/android-commandlinetools
+    export ANDROID_HOME
+elif [ -z "${ANDROID_HOME:-}" ] && [ -d /usr/local/share/android-commandlinetools ]; then
+    ANDROID_HOME=/usr/local/share/android-commandlinetools
+    export ANDROID_HOME
+fi
 
 exec "$repo_dir/gradlew" "$@"

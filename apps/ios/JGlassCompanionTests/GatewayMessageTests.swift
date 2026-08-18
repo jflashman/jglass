@@ -36,6 +36,21 @@ final class GatewayMessageTests: XCTestCase {
         }
     }
 
+    func testReliabilityMetricsAreEphemeralAndRelative() {
+        var metrics = GatewayReliabilityMetrics(startedAt: 100)
+
+        metrics.recordSubscription("Subscribed", at: 101.25)
+        metrics.recordCompletedMessage("Received ping", at: 103.5)
+        metrics.recordRestoration("Restored", at: 108)
+
+        XCTAssertEqual(metrics.subscriptionEvents, 1)
+        XCTAssertEqual(metrics.completedMessages, 1)
+        XCTAssertEqual(metrics.restorationEvents, 1)
+        XCTAssertEqual(metrics.lastEvent, "Restored")
+        XCTAssertEqual(metrics.lastEventElapsedSeconds, 8)
+        XCTAssertEqual(metrics.lastEventTime, "8.0 s")
+    }
+
     private func fixture(named name: String) -> Data {
         let url = Bundle(for: Self.self).url(forResource: name, withExtension: "json")!
         return try! Data(contentsOf: url)

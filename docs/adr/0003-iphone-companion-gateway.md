@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-08-17
+- Updated: 2026-08-18
 - Amended: 2026-08-17 after physical BLE, GATT, and HFP testing
 
 ## Context
@@ -75,8 +76,16 @@ bounded `gateway.hello`, validated the matching acknowledgement, fragmented and
 wrote `gateway.ping`, and reassembled and validated the pong. The companion
 reported internet reachability, after which Glass closed the one-shot
 connection. This verifies the basic foreground GATT direction and 20-byte
-framing contract, but not enrollment, background wake, reconnection, cellular
-relay under lock, or audio throughput.
+framing contract.
+
+The v0.4 reliability probe then retained one subscribed connection while the
+iPhone was locked. The initial exchange and five delayed pings all completed,
+after which the companion observed a clean unsubscribe. Reconnect did not work:
+after one foreground exchange, five rediscovery cycles under lock returned
+`not_found`; a new run started while the companion was ordinarily backgrounded
+and unlocked returned `not_found` for all six cycles. No new subscription,
+message, or Core Bluetooth restoration event appeared during those failures.
+Bluetooth interruption, force-quit, and manual-relaunch recovery remain pending.
 
 ## Consequences
 
@@ -89,8 +98,10 @@ Bluetooth peripheral app can be woken for connected read, write, and subscriptio
 events, but it cannot run forever. If the user force-quits it, state restoration
 does not relaunch it. In the background, the advertised local name is omitted
 and service UUIDs move to an overflow area discoverable only by iOS scanners.
-Consequently, reconnect after a dropped background connection is a primary
-feasibility risk.
+Consequently, reconnect after a dropped background connection was a primary
+feasibility risk and is now an observed failure on the tested XE24/iPhone pair.
+The design may continue using a maintained GATT connection, but it must not
+assume Glass can rediscover the companion after that connection drops.
 
 Both speech directions now remain on the GATT data path. Bounded, compressed,
 interruptible audio over BLE must be measured for throughput, latency, battery,

@@ -31,6 +31,7 @@ dist/
 coverage/
 .turbo/
 .pnpm-store/
+services/bridge/data/
 
 # Python experiments
 __pycache__/

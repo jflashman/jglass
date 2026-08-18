@@ -6,6 +6,39 @@ enum JGlassGatewayProtocol {
     static let maximumIdentifierBytes = 128
 }
 
+struct GatewayReliabilityMetrics: Equatable {
+    let startedAt: TimeInterval
+    private(set) var subscriptionEvents = 0
+    private(set) var completedMessages = 0
+    private(set) var restorationEvents = 0
+    private(set) var lastEvent = "None"
+    private(set) var lastEventElapsedSeconds: TimeInterval = 0
+
+    mutating func recordSubscription(_ description: String, at uptime: TimeInterval) {
+        subscriptionEvents += 1
+        recordEvent(description, at: uptime)
+    }
+
+    mutating func recordCompletedMessage(_ description: String, at uptime: TimeInterval) {
+        completedMessages += 1
+        recordEvent(description, at: uptime)
+    }
+
+    mutating func recordRestoration(_ description: String, at uptime: TimeInterval) {
+        restorationEvents += 1
+        recordEvent(description, at: uptime)
+    }
+
+    mutating func recordEvent(_ description: String, at uptime: TimeInterval) {
+        lastEvent = description
+        lastEventElapsedSeconds = max(0, uptime - startedAt)
+    }
+
+    var lastEventTime: String {
+        String(format: "%.1f s", lastEventElapsedSeconds)
+    }
+}
+
 struct GatewayPayload: Codable, Equatable {
     var transport: String?
     var role: String?

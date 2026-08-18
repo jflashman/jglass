@@ -1,8 +1,8 @@
-# Glass client
+# JGlass client
 
-The first implementation is a provider-free diagnostic APK for the physical
-Google Glass XE24 unit. It proves the voice-critical device path before the
-bridge or provider integrations are added.
+The v0.5 implementation is the JGlass client for the physical XE24 unit. Its
+existing provider-free diagnostics remain available after the once-daily startup
+weather and speech experience.
 
 Baseline constraints:
 
@@ -13,7 +13,10 @@ Baseline constraints:
 - push-to-talk before wake word;
 - one-shot camera capture before continuous vision.
 
-The current diagnostic app:
+On the first launch of each local calendar day, the app runs the concentric-ring
+loader, requests an authenticated greeting from the trusted-LAN bridge, displays
+the weather summary and Open-Meteo attribution, and plays the returned MP3. It
+then exposes the existing diagnostic features:
 
 - renders a 640x360-friendly status card;
 - uses tap/center-key input to start and stop a five-second maximum recording;
@@ -22,23 +25,78 @@ The current diagnostic app:
 - optionally probes an explicit bridge health URL without logging its body.
 - reports Bluetooth/BLE readiness, paired-device count, and headset/media
   connection state without displaying device names or addresses.
-- performs one bounded 10-second BLE scan and software-matches only the public
+- performs a bounded 10-second BLE scan and software-matches only the public
   JGlass gateway service UUID. Software matching avoids a verified XE24
   platform-filter incompatibility with iOS 128-bit service advertisements.
 - transiently retains only the matched peripheral object long enough to connect,
   discover the two control characteristics, subscribe to the downlink, and
-  exchange bounded `gateway.hello` and `gateway.ping` messages. It then closes
-  the connection without displaying or logging device identifiers.
+  exchange bounded `gateway.hello` and `gateway.ping` messages. The default mode
+  then closes the connection without displaying or logging device identifiers.
+- accepts an explicit `gateway_probe_mode` launch extra for bounded reliability
+  tests. `connected-wake` retains one subscribed connection for five additional
+  pings at 15-second intervals; `reconnect` performs one initial exchange plus
+  five rediscovery/reconnection cycles separated by 10 seconds.
+- displays only probe mode, successful/attempted exchange counts, and a stable
+  last-failure category. Probe state is in memory and is discarded when the app
+  process stops.
 
 Camera and GDK gesture semantics remain separate physical-device baseline tasks.
 The foreground GATT exchange is implemented and physically verified; background
 wake and reconnect behavior still require physical verification.
 
+Morning is 05:00–11:59, afternoon 12:00–17:59, and evening 18:00–04:59 in the
+Glass local timezone. The date is recorded only when dynamic or cached fallback
+playback begins. A request cancelled before playback remains eligible on the next
+launch. Dynamic MP3s are deleted after playback. Fixed fallback MP3s remain in
+app-private storage and refresh when the bridge version changes; before their
+first successful provisioning, bridge failure is text-only and is not counted.
+
+## Private startup provisioning
+
+The debug APK accepts bridge configuration only through explicit debug launch
+extras, immediately removes those extras from the retained Activity intent, and
+persists the values in app-private preferences. Neither value is built into the
+APK. Use a trusted USB/ADB session and avoid saving the token in shell history:
+
+```sh
+read -s JGLASS_DEVICE_TOKEN
+adb shell am start -n com.jglass.diagnostic/.MainActivity \
+  --es startup_bridge_url http://BRIDGE_LAN_IP:8787 \
+  --es startup_device_token "$JGLASS_DEVICE_TOKEN"
+unset JGLASS_DEVICE_TOKEN
+```
+
+Force a same-day replay only in a debug build:
+
+```sh
+adb shell am start -n com.jglass.diagnostic/.MainActivity \
+  --ez force_startup_greeting true
+```
+
+Release builds ignore provisioning and force-greeting extras. A production
+enrollment and token-rotation UI remains future work.
+
+## XE24 system branding
+
+The reproducible boot-animation generator and official-system-image patch flow
+are documented in
+[`../../firmware/xe24/branding/README.md`](../../firmware/xe24/branding/README.md).
+It changes only the stock system boot animation. The patched system partition
+was physically flashed and the animated JGlass system phase was visually
+verified on 2026-08-18. The earlier stock `GLASS` boot phase remains visible for
+a few seconds and is outside this system-partition-only change.
+
+Unknown `gateway_probe_mode` values safely fall back to the existing `oneshot`
+behavior. A connected-wake failure is terminal because opening a new connection
+would no longer measure wake behavior on the maintained GATT link. Reconnect
+failures consume one bounded cycle and continue until all six cycles finish.
+
 ## Toolchain
 
 - Android Gradle Plugin 8.13.2;
 - Gradle 8.13 through the checked-in wrapper;
-- JDK 21 on the current Kali host; JDK 17 or newer is supported;
+- Homebrew OpenJDK 21 on the primary macOS host and JDK 21 on the Kali host;
+  JDK 17 through 23 is supported by the selected Gradle version;
 - `compileSdk 35`, `minSdk 19`, and `targetSdk 19`.
 
 The root build pins patched security floors for vulnerable AGP transitive
@@ -49,7 +107,10 @@ artifact.
 
 The host needs Android SDK Platform 35 and SDK Build Tools 35.0.0. Set
 `ANDROID_HOME` or create an uncommitted `local.properties` containing
-`sdk.dir=/absolute/path/to/android-sdk`.
+`sdk.dir=/absolute/path/to/android-sdk`. On Homebrew macOS, the Gradle helper
+automatically uses `/opt/homebrew/share/android-commandlinetools` (Apple Silicon)
+or `/usr/local/share/android-commandlinetools` (Intel) when `ANDROID_HOME` is
+unset.
 
 ## Build and test
 
@@ -60,9 +121,10 @@ apps/glass/scripts/test-java.sh
 apps/glass/scripts/gradle.sh :apps:glass:lintDebug :apps:glass:assembleDebug
 ```
 
-The helper chooses the host's JDK 21 or JDK 17 installation. Set
-`JGLASS_JAVA_HOME` when the compatible JDK is installed elsewhere. The standard
-`./gradlew` entry point remains available when `JAVA_HOME` is already suitable.
+The helpers choose Homebrew OpenJDK 21 on Apple Silicon/Intel macOS or JDK 21/17
+in the documented Linux locations. Set `JGLASS_JAVA_HOME` when a compatible JDK
+is installed elsewhere. The standard `./gradlew` entry point remains available
+when `JAVA_HOME` is already suitable.
 
 Install only while an authorized Glass device is connected:
 
@@ -79,6 +141,20 @@ adb shell am start -n com.jglass.diagnostic/.MainActivity \
   --es bridge_health_url http://BRIDGE_LAN_IP:8787/health
 ```
 
+Reliability probes are selected only through an explicit ADB launch extra:
+
+```sh
+adb shell am start -n com.jglass.diagnostic/.MainActivity \
+  --es gateway_probe_mode connected-wake
+
+adb shell am start -n com.jglass.diagnostic/.MainActivity \
+  --es gateway_probe_mode reconnect
+```
+
+Launching without the extra preserves the one-shot foreground diagnostic. A
+new launch updates an already-running activity, and leaving the Glass activity
+cancels all pending pings, scans, and retries.
+
 ## Physical test procedure
 
 1. Launch the app and confirm the complete card fits the display.
@@ -94,6 +170,53 @@ adb shell am start -n com.jglass.diagnostic/.MainActivity \
    `pong / internet reachable` or `pong / internet offline`.
 9. Confirm the iPhone reports a Glass subscription and receipt of the diagnostic
    messages. Relaunch the Glass app to repeat the one-shot exchange.
+
+For the startup slice, additionally:
+
+1. Match bridge `JGLASS_TIME_ZONE` to the Glass timezone and start the bridge on
+   an explicitly trusted-LAN address.
+2. Provision the debug APK over authorized ADB and force the greeting.
+3. Confirm the rings fit 640×360 and animate smoothly, then confirm weather text
+   and `Weather data by Open-Meteo.com` are legible while speech plays on Glass.
+4. Relaunch normally and confirm the greeting does not repeat that calendar day.
+5. Stop the bridge and force replay after fallback provisioning; confirm the
+   correct local-period fallback plays and counts for the date.
+6. Leave the activity during animation, download, and playback in separate runs;
+   confirm cancellation and dynamic-audio deletion.
+7. Return to ready and repeat audio loopback plus the bounded BLE probe to guard
+   the existing physical baseline.
+
+None of these new startup cases has yet been verified on the physical XE24.
+
+## BLE reliability test matrix
+
+Use only the existing non-sensitive hello/ping messages. Start each scenario
+with the iPhone gateway enabled and record the final Glass success/attempt count,
+last stable failure, iPhone subscription/message/restoration counts, and rough
+elapsed time. Do not record Bluetooth identifiers or packet contents.
+
+1. Run `oneshot` with the companion foregrounded to establish the baseline.
+2. Run `connected-wake`; after the initial success, press the iPhone side button
+   to lock it. Expect five additional pings on the maintained connection.
+3. Repeat `connected-wake`, but return to the iPhone Home Screen without locking.
+4. Run `reconnect`; after the initial success, lock the iPhone before the next
+   10-second cycle. This separately tests background discovery and connection.
+5. Repeat `reconnect` with the companion ordinarily backgrounded but unlocked.
+6. During a `reconnect` run, turn iPhone Bluetooth off for at least one cycle,
+   then restore it before the bounded run ends. Record failure and recovery as
+   distinct outcomes.
+7. During a `reconnect` run, force-quit the companion after the initial success.
+   Record failed cycles, manually relaunch and enable the gateway, and record
+   whether a later bounded cycle recovers. Do not treat force-quit behavior as
+   equivalent to ordinary background suspension.
+
+The new reliability state machine passes its host-side self-tests under Homebrew
+OpenJDK 21. Android lint passes and the v0.4 APK assembles on the primary macOS
+host with Platform 35 and Build Tools 35.0.0. The APK was installed and launched
+on the physical XE24 unit, where `MainActivity` remained the resumed activity and
+ADB showed no fatal exception. The new reliability modes still require the
+remaining interruption, termination, and relaunch portions of the interactive
+iPhone/Glass matrix below.
 
 Do not use private speech during diagnostic testing. No recording is written to
 storage by the application.
@@ -138,11 +261,33 @@ security floors: the byte-identical APK installed successfully, explicitly
 launched `MainActivity`, remained foregrounded, rendered the complete 640x360
 ready card, and produced no fatal exception during the smoke test.
 
+Also verified on 2026-08-18 from the primary macOS host: all four Java self-test
+suites pass, Android lint passes, v0.4.0 assembles as an API 19-compatible debug
+APK, package version 4 installs over the existing diagnostic, and the activity
+launches and remains resumed without a fatal exception. Visual fit and the new
+multi-cycle BLE states were then verified manually by Joshua: the complete card
+fit, the two-line probe result was readable, and audio recording/playback still
+worked.
+
+The foreground one-shot completed `1/1`. Connected-wake completed `6/6` while
+the iPhone stayed locked, proving five delayed writes on the maintained link.
+Reconnect after locking completed `1/6 last=not_found`: only the initial
+foreground cycle succeeded. A run begun with the companion ordinarily
+backgrounded and unlocked completed `0/6 last=not_found`. Companion counters
+confirmed that the failed cycles never subscribed or delivered a control
+message, and no Core Bluetooth restoration callback occurred.
+
 Not yet verified on the physical device: cancellation while recording or
 playing, a real LAN health probe, camera capture, Wi-Fi transport behavior,
-microphone isolation during an ordinary phone call, GATT behavior while the
-iPhone is backgrounded or locked, reconnection, or audio throughput. A
+microphone isolation during an ordinary phone call, or audio throughput. A
 companion-owned HFP session was tested separately and is not usable as the JGlass
 application audio path.
+
+Also not yet verified on the physical device: Bluetooth interruption recovery or
+companion termination/manual-relaunch behavior. The attempted interruption test
+was explicitly canceled before producing a result.
+
+See [`../../docs/testing/2026-08-18-ble-reliability.md`](../../docs/testing/2026-08-18-ble-reliability.md)
+for the completed counter snapshots, pending cases, and exact resume procedure.
 
 If code is adapted from another project, complete the workflow in `../../docs/OPEN_SOURCE_POLICY.md` and update `../../THIRD_PARTY_NOTICES.md` in the same commit.

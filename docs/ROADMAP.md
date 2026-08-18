@@ -8,12 +8,14 @@ The roadmap is ordered to produce a usable vertical slice before adding difficul
 - [x] Record `adb shell getprop` fields needed for builds without committing the device serial.
 - [x] Verify microphone recording, speaker playback, and tap interaction with a minimal diagnostic app.
 - [ ] Verify camera capture and Wi-Fi application transport with minimal diagnostic slices.
+  The authenticated startup transport is host-implemented but still requires a
+  provider-backed physical XE24 run.
 - [ ] Verify Bluetooth Classic and BLE behavior with minimal diagnostic slices.
   Classic pairing, profile-state reporting, foreground application BLE service
   discovery, and a fragmented GATT hello/ping round trip are verified; reconnect
   behavior remains unverified.
 - [x] Select and document the Android build toolchain that can reliably target API 19.
-- [ ] Decide the bridge language/runtime based on a small audio round-trip spike.
+- [x] Select Node 22+ / TypeScript with built-in HTTP/fetch for the initial bridge.
 - [x] Create repeatable build, lint, and test commands.
 
 Acceptance: a new Codex task can build and install a harmless diagnostic APK using documented commands.
@@ -38,9 +40,14 @@ Acceptance: a new Codex task can build and install a harmless diagnostic APK usi
 - [x] Connect to the companion GATT service and complete a bounded fragmented
   hello/ping exchange.
 - [ ] Add explicit enrollment.
-- [ ] Confirm a connected write wakes the background companion.
+- [x] Confirm a connected write wakes the background companion. Five delayed
+  pings completed while the paired iPhone remained locked.
 - [ ] Measure reconnection after screen lock, suspension, process termination,
   Bluetooth interruption, and app relaunch.
+  Locked rediscovery produced one foreground success followed by five
+  `not_found` results; starting with the companion ordinarily backgrounded
+  produced six `not_found` results. Bluetooth interruption, termination, and
+  manual relaunch recovery remain pending.
 - [ ] Relay a non-sensitive cellular-backed ping through the locked iPhone.
 - [ ] Measure compressed microphone upload throughput before selecting a codec.
 - [ ] Add enrollment authentication before sending real audio or actions.
@@ -53,12 +60,28 @@ routing and reconnection limitations are documented from physical tests.
 ## Milestone 1: Local voice loop
 
 - [ ] Glass push-to-talk UI with recording indication.
-- [ ] Authenticated local bridge connection.
+- [ ] Authenticated local bridge connection. Startup greeting transport is
+  implemented and host-tested; physical Wi-Fi verification remains.
 - [ ] Speech-to-text.
 - [ ] OpenAI text response.
 - [ ] Compact streaming HUD output.
 - [ ] ElevenLabs response playback with cancellation.
 - [ ] Redacted structured logs and latency measurements.
+
+### Daily startup slice
+
+- [x] Add API-19 Canvas JGlass loader and once-per-day state rules.
+- [x] Add authenticated weather/TTS protocol, strict response bounds, and shared
+  Glass/bridge fixtures.
+- [x] Add Open-Meteo Fahrenheit summaries and visible attribution.
+- [x] Add versioned period-specific fallback provisioning and ephemeral dynamic
+  audio handling.
+- [x] Build and host-verify a reversible JGlass XE24 boot-animation system image.
+- [x] Flash and verify the JGlass system boot animation on the physical XE24.
+  The earlier stock `GLASS` boot phase remains visible briefly before the new
+  JGlass system animation; this two-stage sequence is accepted for now.
+- [ ] Verify successful, offline-fallback, same-day-skip, debug-force, and
+  cancellation behavior on the physical XE24.
 
 Acceptance: on a trusted LAN, ask a spoken question and hear/see the response on Glass without storing credentials on the device.
 

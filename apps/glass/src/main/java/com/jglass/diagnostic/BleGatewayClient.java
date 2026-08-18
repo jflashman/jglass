@@ -21,6 +21,7 @@ import org.json.JSONObject;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 final class BleGatewayClient {
@@ -47,6 +48,7 @@ final class BleGatewayClient {
         WAITING_HELLO_ACK,
         SENDING_PING,
         WAITING_PONG,
+        WAITING_RETRY,
         PONG_INTERNET,
         PONG_OFFLINE,
         NOT_FOUND,
@@ -62,7 +64,7 @@ final class BleGatewayClient {
     }
 
     interface Listener {
-        void onGatewayStatus(Status status);
+        void onGatewayStatus(Status status, GatewayProbeCoordinator.Snapshot snapshot);
     }
 
     private enum ExpectedResponse {
@@ -79,6 +81,8 @@ final class BleGatewayClient {
             new BleControlFraming.Reassembler();
 
     private boolean active;
+    private boolean connectionCycleActive;
+    private boolean exchangeTerminalHandled;
     private boolean scanning;
     private BluetoothGatt gatt;
     private BluetoothGattCharacteristic uplink;
@@ -86,15 +90,19 @@ final class BleGatewayClient {
     private List<byte[]> pendingWrites = Collections.emptyList();
     private int pendingWriteIndex;
     private int nextStreamId = 1;
+    private int nextMessageSequence;
     private ExpectedResponse expectedResponse = ExpectedResponse.NONE;
+    private GatewayProbeCoordinator coordinator;
     private String sessionId;
     private String helloRequestId;
     private String pingRequestId;
+    private int helloSequence;
+    private int pingSequence;
 
     private final Runnable scanTimeout = new Runnable() {
         @Override
         public void run() {
-            if (!active || !scanning) {
+            if (!active || !connectionCycleActive || !scanning) {
                 return;
             }
             stopScan();
@@ -105,9 +113,30 @@ final class BleGatewayClient {
     private final Runnable phaseTimeout = new Runnable() {
         @Override
         public void run() {
-            if (active) {
+            if (active && connectionCycleActive) {
                 fail(Status.TIMED_OUT);
             }
+        }
+    };
+
+    private final Runnable scheduledAction = new Runnable() {
+        @Override
+        public void run() {
+            if (!active || coordinator == null) {
+                return;
+            }
+            GatewayProbeCoordinator.Snapshot snapshot = coordinator.snapshot();
+            if (snapshot.mode == GatewayProbeCoordinator.Mode.CONNECTED_WAKE) {
+                if (!connectionCycleActive || gatt == null || uplink == null) {
+                    fail(Status.CONNECTION_FAILED);
+                    return;
+                }
+                exchangeTerminalHandled = false;
+                coordinator.onConnectedPingStarted();
+                sendPing();
+                return;
+            }
+            startConnectionCycle();
         }
     };
 
@@ -115,7 +144,8 @@ final class BleGatewayClient {
             new BluetoothAdapter.LeScanCallback() {
                 @Override
                 public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
-                    if (!active || !scanning || !BleAdvertisementMatcher.containsServiceUuid(
+                    if (!active || !connectionCycleActive || !scanning
+                            || !BleAdvertisementMatcher.containsServiceUuid(
                             scanRecord, GATEWAY_SERVICE_UUID)) {
                         return;
                     }
@@ -123,7 +153,7 @@ final class BleGatewayClient {
                     // Retain the device object only for this bounded connection. Never inspect or
                     // expose its address, name, signal strength, or full advertisement payload.
                     stopScan();
-                    listener.onGatewayStatus(Status.CONNECTING);
+                    notifyStatus(Status.CONNECTING);
                     schedulePhaseTimeout();
                     gatt = device.connectGatt(context, false, gattCallback);
                     if (gatt == null) {
@@ -138,7 +168,7 @@ final class BleGatewayClient {
                 BluetoothGatt callbackGatt,
                 int status,
                 int newState) {
-            if (!active) {
+            if (!active || !connectionCycleActive) {
                 callbackGatt.close();
                 return;
             }
@@ -148,7 +178,7 @@ final class BleGatewayClient {
                 return;
             }
 
-            listener.onGatewayStatus(Status.DISCOVERING);
+            notifyStatus(Status.DISCOVERING);
             schedulePhaseTimeout();
             if (!callbackGatt.discoverServices()) {
                 fail(Status.SERVICE_INVALID);
@@ -157,7 +187,7 @@ final class BleGatewayClient {
 
         @Override
         public void onServicesDiscovered(BluetoothGatt callbackGatt, int status) {
-            if (!active) {
+            if (!active || !connectionCycleActive) {
                 return;
             }
             if (status != BluetoothGatt.GATT_SUCCESS) {
@@ -188,7 +218,7 @@ final class BleGatewayClient {
                 return;
             }
 
-            listener.onGatewayStatus(Status.SUBSCRIBING);
+            notifyStatus(Status.SUBSCRIBING);
             byte[] configurationValue =
                     (downlink.getProperties() & BluetoothGattCharacteristic.PROPERTY_INDICATE) != 0
                             ? BluetoothGattDescriptor.ENABLE_INDICATION_VALUE
@@ -205,7 +235,8 @@ final class BleGatewayClient {
                 BluetoothGatt callbackGatt,
                 BluetoothGattDescriptor descriptor,
                 int status) {
-            if (!active || !CLIENT_CONFIGURATION_UUID.equals(descriptor.getUuid())) {
+            if (!active || !connectionCycleActive
+                    || !CLIENT_CONFIGURATION_UUID.equals(descriptor.getUuid())) {
                 return;
             }
             if (status != BluetoothGatt.GATT_SUCCESS) {
@@ -220,7 +251,8 @@ final class BleGatewayClient {
                 BluetoothGatt callbackGatt,
                 BluetoothGattCharacteristic characteristic,
                 int status) {
-            if (!active || !CONTROL_UPLINK_UUID.equals(characteristic.getUuid())) {
+            if (!active || !connectionCycleActive
+                    || !CONTROL_UPLINK_UUID.equals(characteristic.getUuid())) {
                 return;
             }
             if (status != BluetoothGatt.GATT_SUCCESS) {
@@ -232,7 +264,7 @@ final class BleGatewayClient {
                 writeNextFragment();
                 return;
             }
-            listener.onGatewayStatus(expectedResponse == ExpectedResponse.HELLO_ACK
+            notifyStatus(expectedResponse == ExpectedResponse.HELLO_ACK
                     ? Status.WAITING_HELLO_ACK
                     : Status.WAITING_PONG);
             schedulePhaseTimeout();
@@ -242,7 +274,8 @@ final class BleGatewayClient {
         public void onCharacteristicChanged(
                 BluetoothGatt callbackGatt,
                 BluetoothGattCharacteristic characteristic) {
-            if (!active || !CONTROL_DOWNLINK_UUID.equals(characteristic.getUuid())) {
+            if (!active || !connectionCycleActive
+                    || !CONTROL_DOWNLINK_UUID.equals(characteristic.getUuid())) {
                 return;
             }
             try {
@@ -264,9 +297,26 @@ final class BleGatewayClient {
     }
 
     @SuppressLint("MissingPermission")
-    void start() {
+    void start(GatewayProbeCoordinator.Mode mode) {
         stop();
         active = true;
+        coordinator = new GatewayProbeCoordinator(mode);
+        startConnectionCycle();
+    }
+
+    @SuppressLint("MissingPermission")
+    private void startConnectionCycle() {
+        if (!active || coordinator == null) {
+            return;
+        }
+        mainHandler.removeCallbacks(scheduledAction);
+        closeGatt();
+        reassembler.reset();
+        pendingWrites = Collections.emptyList();
+        expectedResponse = ExpectedResponse.NONE;
+        connectionCycleActive = true;
+        exchangeTerminalHandled = false;
+        coordinator.onConnectionCycleStarted();
         if (adapter == null || !context.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_BLUETOOTH_LE)) {
             fail(Status.BLE_UNAVAILABLE);
@@ -279,8 +329,8 @@ final class BleGatewayClient {
 
         sessionId = "s" + Long.toHexString(SystemClock.elapsedRealtime());
         helloRequestId = "h" + Long.toHexString(SystemClock.elapsedRealtime());
-        pingRequestId = "p" + Long.toHexString(SystemClock.elapsedRealtime());
-        listener.onGatewayStatus(Status.SCANNING);
+        nextMessageSequence = 1;
+        notifyStatus(Status.SCANNING);
         scanning = true;
         if (!adapter.startLeScan(scanCallback)) {
             scanning = false;
@@ -292,8 +342,11 @@ final class BleGatewayClient {
 
     void stop() {
         active = false;
+        connectionCycleActive = false;
+        exchangeTerminalHandled = true;
         mainHandler.removeCallbacks(scanTimeout);
         mainHandler.removeCallbacks(phaseTimeout);
+        mainHandler.removeCallbacks(scheduledAction);
         if (scanning) {
             stopScan();
         }
@@ -301,14 +354,16 @@ final class BleGatewayClient {
         reassembler.reset();
         pendingWrites = Collections.emptyList();
         expectedResponse = ExpectedResponse.NONE;
+        coordinator = null;
     }
 
     private void sendHello() {
         try {
+            helloSequence = nextMessageSequence++;
             JSONObject payload = new JSONObject()
                     .put("transport", "ble-gatt")
                     .put("role", "glass-central");
-            sendMessage("gateway.hello", helloRequestId, 1, payload,
+            sendMessage("gateway.hello", helloRequestId, helloSequence, payload,
                     ExpectedResponse.HELLO_ACK, Status.SENDING_HELLO);
         } catch (JSONException error) {
             fail(Status.PROTOCOL_FAILED);
@@ -317,7 +372,10 @@ final class BleGatewayClient {
 
     private void sendPing() {
         try {
-            sendMessage("gateway.ping", pingRequestId, 2, new JSONObject(),
+            pingRequestId = "p" + Long.toHexString(SystemClock.elapsedRealtime())
+                    + Integer.toHexString(nextMessageSequence);
+            pingSequence = nextMessageSequence++;
+            sendMessage("gateway.ping", pingRequestId, pingSequence, new JSONObject(),
                     ExpectedResponse.PONG, Status.SENDING_PING);
         } catch (JSONException error) {
             fail(Status.PROTOCOL_FAILED);
@@ -344,7 +402,7 @@ final class BleGatewayClient {
         nextStreamId = nextStreamId == 0xffff ? 1 : nextStreamId + 1;
         pendingWriteIndex = 0;
         expectedResponse = response;
-        listener.onGatewayStatus(status);
+        notifyStatus(status);
         schedulePhaseTimeout();
         writeNextFragment();
     }
@@ -363,6 +421,9 @@ final class BleGatewayClient {
     }
 
     private void handleResponse(byte[] encoded) {
+        if (expectedResponse == ExpectedResponse.NONE) {
+            return;
+        }
         try {
             JSONObject message = new JSONObject(new String(encoded, UTF_8));
             if (!"jglass/1".equals(message.optString("protocol"))
@@ -374,7 +435,7 @@ final class BleGatewayClient {
             if (expectedResponse == ExpectedResponse.HELLO_ACK
                     && "gateway.hello_ack".equals(message.optString("type"))
                     && helloRequestId.equals(message.optString("requestId"))
-                    && message.optInt("sequence", -1) == 1) {
+                    && message.optInt("sequence", -1) == helloSequence) {
                 JSONObject payload = message.optJSONObject("payload");
                 if (payload == null
                         || !"jglass/1".equals(payload.optString("acceptedProtocol"))
@@ -389,13 +450,13 @@ final class BleGatewayClient {
             if (expectedResponse == ExpectedResponse.PONG
                     && "gateway.pong".equals(message.optString("type"))
                     && pingRequestId.equals(message.optString("requestId"))
-                    && message.optInt("sequence", -1) == 2) {
+                    && message.optInt("sequence", -1) == pingSequence) {
                 JSONObject payload = message.optJSONObject("payload");
                 if (payload == null || !payload.has("internetReachable")) {
                     fail(Status.PROTOCOL_FAILED);
                     return;
                 }
-                complete(payload.optBoolean("internetReachable")
+                completeExchange(payload.optBoolean("internetReachable")
                         ? Status.PONG_INTERNET
                         : Status.PONG_OFFLINE);
                 return;
@@ -420,25 +481,62 @@ final class BleGatewayClient {
         scanning = false;
     }
 
-    private void complete(Status status) {
-        listener.onGatewayStatus(status);
-        active = false;
-        mainHandler.removeCallbacks(phaseTimeout);
-        closeGatt();
-    }
-
-    private void fail(Status status) {
-        if (!active && status != Status.BLE_UNAVAILABLE && status != Status.BLUETOOTH_OFF) {
+    private synchronized void completeExchange(Status status) {
+        if (!active || !connectionCycleActive || exchangeTerminalHandled
+                || coordinator == null) {
             return;
         }
-        listener.onGatewayStatus(status);
-        active = false;
+        exchangeTerminalHandled = true;
+        mainHandler.removeCallbacks(phaseTimeout);
+        expectedResponse = ExpectedResponse.NONE;
+        pendingWrites = Collections.emptyList();
+        GatewayProbeCoordinator.Decision decision = coordinator.onExchangeSucceeded();
+        notifyStatus(status);
+        applyDecision(decision);
+    }
+
+    private synchronized void fail(Status status) {
+        if (!active || exchangeTerminalHandled || coordinator == null) {
+            return;
+        }
+        exchangeTerminalHandled = true;
         mainHandler.removeCallbacks(scanTimeout);
         mainHandler.removeCallbacks(phaseTimeout);
         if (scanning) {
             stopScan();
         }
+        connectionCycleActive = false;
         closeGatt();
+        reassembler.reset();
+        pendingWrites = Collections.emptyList();
+        expectedResponse = ExpectedResponse.NONE;
+        GatewayProbeCoordinator.Decision decision = coordinator.onExchangeFailed(
+                status.name().toLowerCase(Locale.US));
+        notifyStatus(status);
+        applyDecision(decision);
+    }
+
+    private void applyDecision(GatewayProbeCoordinator.Decision decision) {
+        if (decision.action == GatewayProbeCoordinator.Action.COMPLETE) {
+            active = false;
+            connectionCycleActive = false;
+            mainHandler.removeCallbacks(scheduledAction);
+            closeGatt();
+            return;
+        }
+
+        if (decision.action == GatewayProbeCoordinator.Action.START_CONNECTION_CYCLE) {
+            connectionCycleActive = false;
+            closeGatt();
+        }
+        notifyStatus(Status.WAITING_RETRY);
+        mainHandler.postDelayed(scheduledAction, decision.delayMillis);
+    }
+
+    private void notifyStatus(Status status) {
+        if (coordinator != null) {
+            listener.onGatewayStatus(status, coordinator.snapshot());
+        }
     }
 
     @SuppressLint("MissingPermission")
