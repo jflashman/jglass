@@ -5,6 +5,12 @@ No third-party application source code or assets have been imported into JGlass 
 The iPhone companion diagnostic uses Apple system frameworks only and adds no
 third-party package or application code.
 
+The Android build resolves third-party libraries transitively through the
+Android Gradle Plugin. Security version floors for those host-side tools are
+documented in `SECURITY.md`; their binaries are downloaded into the developer or
+CI Gradle cache and are not copied into the repository or packaged in the Glass
+APK.
+
 Repository links in planning documents are references and do not indicate that
 their code has been incorporated.
 

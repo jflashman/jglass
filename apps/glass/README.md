@@ -31,7 +31,8 @@ The current diagnostic app:
   the connection without displaying or logging device identifiers.
 
 Camera and GDK gesture semantics remain separate physical-device baseline tasks.
-The GATT exchange is implemented but still requires physical verification.
+The foreground GATT exchange is implemented and physically verified; background
+wake and reconnect behavior still require physical verification.
 
 ## Toolchain
 
@@ -39,6 +40,12 @@ The GATT exchange is implemented but still requires physical verification.
 - Gradle 8.13 through the checked-in wrapper;
 - JDK 21 on the current Kali host; JDK 17 or newer is supported;
 - `compileSdk 35`, `minSdk 19`, and `targetSdk 19`.
+
+The root build pins patched security floors for vulnerable AGP transitive
+libraries. They are host-side build/test tooling only; the Glass application has
+no third-party runtime dependencies. On 2026-08-18, a clean build using those
+floors produced an APK byte-for-byte identical to the previously verified API 19
+artifact.
 
 The host needs Android SDK Platform 35 and SDK Build Tools 35.0.0. Set
 `ANDROID_HOME` or create an uncommitted `local.properties` containing
@@ -125,6 +132,11 @@ did not deliver that valid custom 128-bit iOS advertisement, so it is not used.
 The v0.3 diagnostic then connected, discovered both control characteristics,
 subscribed, exchanged the fragmented hello and ping messages, validated their
 responses, displayed `pong / internet reachable`, and closed the connection.
+
+Verified on the physical XE24 unit on 2026-08-18 after applying the host-tool
+security floors: the byte-identical APK installed successfully, explicitly
+launched `MainActivity`, remained foregrounded, rendered the complete 640x360
+ready card, and produced no fatal exception during the smoke test.
 
 Not yet verified on the physical device: cancellation while recording or
 playing, a real LAN health probe, camera capture, Wi-Fi transport behavior,

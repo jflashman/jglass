@@ -1,6 +1,6 @@
 # Project context and handoff
 
-Last verified: 2026-08-17.
+Last verified: 2026-08-18.
 
 This document captures the relevant state from the conversation that created JGlass so a future Codex task can continue without access to that conversation.
 
@@ -75,6 +75,15 @@ software-matches only the public service UUID from advertisement fields. With
 that build installed, Glass reported `Gateway BLE: service found`. The app does
 not retain device objects, addresses, names, signal strength, or advertisement
 payloads.
+
+On 2026-08-18, the repository's critical/high dependency alerts were traced to
+host-side Android Gradle Plugin and Unified Test Platform transitive libraries;
+the Glass APK itself still has no third-party runtime dependencies. Narrow
+security floors select patched Netty, Bouncy Castle, jose4j, JDOM, and protobuf
+versions without changing AGP, Gradle, D8, AAPT2, SDK levels, or application
+source. A clean rebuild was byte-for-byte identical to the v0.3 APK already
+exercised on the physical XE24/iPhone pair, and that rebuilt artifact installed,
+launched, and rendered successfully on the physical XE24 unit.
 
 ### Recovery information
 
