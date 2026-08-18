@@ -18,6 +18,13 @@ If a secret is committed, treat it as compromised: revoke or rotate it first, th
 
 Do not expose raw SSH, VNC, ADB, the bridge development server, or a Codex worker directly to the public internet. Remote designs require authentication, encryption, revocation, rate limiting, replay protection, scoped workspaces, explicit action approval, and a documented threat model.
 
+The startup bridge binds to loopback unless the operator explicitly selects a
+trusted-LAN address. Its device bearer token, ElevenLabs key/voice ID, weather
+coordinates, spoken text, and audio are excluded from normal logs. Glass stores
+only its bridge URL, revocable device token, last greeting date, and fixed
+fallback MP3s in app-private storage. Dynamic weather audio is deleted after
+playback; camera, microphone, and notification capture are not part of startup.
+
 ## Device safety
 
 Firmware flashing, partition erasure, rooting, recovery replacement, and bootloader operations can brick or wipe irreplaceable hardware. They require explicit approval and a verified recovery path.

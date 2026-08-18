@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">JGlass Diagnostic</string>
-    <string name="title">JGLASS / VOICE BASELINE</string>
+    <string name="app_name">JGlass</string>
+    <string name="title">JGLASS</string>
+    <string name="startup_brand">JGLASS</string>
+    <string name="startup_connecting">Initializing local assistant…</string>
     <string name="state_ready">READY</string>
     <string name="state_recording">RECORDING</string>
     <string name="state_playing">PLAYING BACK</string>
     <string name="state_error">CHECK FAILED</string>
     <string name="error_retry">%1$s. Tap to retry.</string>
-    <string name="instruction_ready">Tap to record up to 5 seconds</string>
+    <string name="instruction_ready">Tap to test voice input</string>
     <string name="instruction_recording">Tap again to stop and hear playback</string>
     <string name="instruction_playing">Tap to cancel playback</string>
     <string name="network_not_configured">LAN probe: not configured</string>
@@ -23,6 +25,7 @@
     <string name="gateway_waiting_hello_ack">Gateway BLE: awaiting hello ack</string>
     <string name="gateway_sending_ping">Gateway BLE: sending ping</string>
     <string name="gateway_waiting_pong">Gateway BLE: awaiting pong</string>
+    <string name="gateway_waiting_retry">Gateway BLE: waiting for next bounded attempt</string>
     <string name="gateway_pong_internet">Gateway BLE: pong / internet reachable</string>
     <string name="gateway_pong_offline">Gateway BLE: pong / internet offline</string>
     <string name="gateway_not_found">Gateway BLE: service not found</string>
@@ -35,5 +38,5 @@
     <string name="gateway_write_failed">Gateway BLE: write failed</string>
     <string name="gateway_protocol_failed">Gateway BLE: protocol failed</string>
     <string name="gateway_timed_out">Gateway BLE: timed out</string>
-    <string name="footer">Audio stays in memory and is discarded after playback</string>
+    <string name="footer">Local diagnostics · captured audio is discarded</string>
 </resources>

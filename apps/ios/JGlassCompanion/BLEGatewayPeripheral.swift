@@ -9,9 +9,11 @@ final class BLEGatewayPeripheral: NSObject, ObservableObject {
 
     @Published private(set) var bluetoothState = "Initializing"
     @Published private(set) var gatewayState = "Stopped"
-    @Published private(set) var lastEvent = "None"
     @Published private(set) var subscriberCount = 0
     @Published private(set) var isEnabled = false
+    @Published private(set) var metrics = GatewayReliabilityMetrics(
+        startedAt: ProcessInfo.processInfo.systemUptime
+    )
 
     private lazy var peripheralManager = CBPeripheralManager(
         delegate: self,
@@ -32,7 +34,7 @@ final class BLEGatewayPeripheral: NSObject, ObservableObject {
 
     func start() {
         isEnabled = true
-        lastEvent = "Start requested"
+        recordEvent("Start requested")
         publishIfPossible()
     }
 
@@ -46,7 +48,7 @@ final class BLEGatewayPeripheral: NSObject, ObservableObject {
         reassembler.reset()
         subscriberCount = 0
         gatewayState = "Stopped"
-        lastEvent = "Gateway stopped"
+        recordEvent("Gateway stopped")
     }
 
     private func publishIfPossible() {
@@ -97,18 +99,18 @@ final class BLEGatewayPeripheral: NSObject, ObservableObject {
                 to: request,
                 internetReachable: reachability.isReachable
             )
-            lastEvent = "Received \(request.type)"
+            recordCompletedMessage("Received \(request.type)")
             try queue(response: response)
         } catch let error as GatewayMessageError {
-            lastEvent = "Rejected message: \(error.stableCode)"
+            recordEvent("Rejected message: \(error.stableCode)")
         } catch {
-            lastEvent = "Rejected malformed message"
+            recordEvent("Rejected malformed message")
         }
     }
 
     private func queue(response: GatewayMessage) throws {
         guard subscriberCount > 0 else {
-            lastEvent = "No downlink subscriber"
+            recordEvent("No downlink subscriber")
             return
         }
 
@@ -123,7 +125,7 @@ final class BLEGatewayPeripheral: NSObject, ObservableObject {
             throw BLEFramingError.tooManyFragments
         }
         pendingIndications.append(contentsOf: frames)
-        lastEvent = "Queued \(response.type)"
+        recordEvent("Queued \(response.type)")
         flushPendingIndications()
     }
 
@@ -146,6 +148,22 @@ final class BLEGatewayPeripheral: NSObject, ObservableObject {
             .first(where: { $0.uuid == Self.controlUplinkUUID }) as? CBMutableCharacteristic
         downlinkCharacteristic = service.characteristics?
             .first(where: { $0.uuid == Self.controlDownlinkUUID }) as? CBMutableCharacteristic
+    }
+
+    private func recordEvent(_ description: String) {
+        metrics.recordEvent(description, at: ProcessInfo.processInfo.systemUptime)
+    }
+
+    private func recordCompletedMessage(_ description: String) {
+        metrics.recordCompletedMessage(description, at: ProcessInfo.processInfo.systemUptime)
+    }
+
+    private func recordSubscription(_ description: String) {
+        metrics.recordSubscription(description, at: ProcessInfo.processInfo.systemUptime)
+    }
+
+    private func recordRestoration(_ description: String) {
+        metrics.recordRestoration(description, at: ProcessInfo.processInfo.systemUptime)
     }
 }
 
@@ -171,21 +189,21 @@ extension BLEGatewayPeripheral: CBPeripheralManagerDelegate {
     func peripheralManager(_ peripheral: CBPeripheralManager, didAdd service: CBService, error: Error?) {
         if error != nil {
             gatewayState = "Service publish failed"
-            lastEvent = "Core Bluetooth could not publish the service"
+            recordEvent("Core Bluetooth could not publish the service")
             return
         }
-        lastEvent = "JGlass service published"
+        recordEvent("JGlass service published")
         startAdvertisingIfNeeded()
     }
 
     func peripheralManagerDidStartAdvertising(_ peripheral: CBPeripheralManager, error: Error?) {
         if error != nil {
             gatewayState = "Advertisement failed"
-            lastEvent = "Core Bluetooth could not start advertising"
+            recordEvent("Core Bluetooth could not start advertising")
             return
         }
         gatewayState = "Advertising"
-        lastEvent = "Waiting for Glass"
+        recordEvent("Waiting for Glass")
     }
 
     func peripheralManager(
@@ -196,7 +214,7 @@ extension BLEGatewayPeripheral: CBPeripheralManagerDelegate {
         guard characteristic.uuid == Self.controlDownlinkUUID else { return }
         subscriberCount += 1
         gatewayState = "Glass subscribed"
-        lastEvent = "Downlink subscribed"
+        recordSubscription("Downlink subscribed")
         flushPendingIndications()
     }
 
@@ -208,7 +226,7 @@ extension BLEGatewayPeripheral: CBPeripheralManagerDelegate {
         guard characteristic.uuid == Self.controlDownlinkUUID else { return }
         subscriberCount = max(0, subscriberCount - 1)
         gatewayState = peripheral.isAdvertising ? "Advertising" : "Published"
-        lastEvent = "Downlink unsubscribed"
+        recordEvent("Downlink unsubscribed")
     }
 
     func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
@@ -233,18 +251,18 @@ extension BLEGatewayPeripheral: CBPeripheralManagerDelegate {
                 case .completed(let message):
                     handleCompletedMessage(message)
                 case .cancelled:
-                    lastEvent = "Control stream cancelled"
+                    recordEvent("Control stream cancelled")
                 case .duplicate:
-                    lastEvent = "Duplicate fragment ignored"
+                    recordEvent("Duplicate fragment ignored")
                 case .waiting:
                     break
                 }
             } catch let error as BLEFramingError {
                 peripheral.respond(to: request, withResult: .invalidPdu)
-                lastEvent = "Rejected frame: \(error.stableCode)"
+                recordEvent("Rejected frame: \(error.stableCode)")
             } catch {
                 peripheral.respond(to: request, withResult: .unlikelyError)
-                lastEvent = "Rejected frame"
+                recordEvent("Rejected frame")
             }
         }
     }
@@ -259,7 +277,7 @@ extension BLEGatewayPeripheral: CBPeripheralManagerDelegate {
         }
         isEnabled = true
         gatewayState = "State restored"
-        lastEvent = "Core Bluetooth restored state"
+        recordRestoration("Core Bluetooth restored state")
     }
 }
 

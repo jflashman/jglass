@@ -38,6 +38,14 @@ Responsibilities:
 - authenticated connection to the bridge;
 - no long-lived provider credentials.
 
+At application launch, Glass runs a once-per-local-calendar-day startup state
+machine before exposing the ordinary ready card. It animates locally, sends a
+bounded authenticated Wi-Fi request, validates the complete response before
+writing audio, displays Open-Meteo attribution with dynamic weather, and deletes
+dynamic MP3 data after playback. Only three fixed period-specific offline clips,
+their version, the revocable bridge configuration, and last playback date are
+retained in app-private storage. A debug-only launch extra can force replay.
+
 Constraints:
 
 - Android 4.4.4 / API 19 on the verified XE24 unit, with old TLS/runtime behavior;
@@ -60,6 +68,13 @@ Responsibilities:
 - privacy-aware logging with payload redaction.
 
 The bridge should expose a typed protocol but not expose provider APIs directly to Glass.
+
+The first implemented bridge slice is Node 22+ TypeScript using built-in HTTP
+and `fetch`, with no runtime dependencies. It binds to loopback by default and
+implements authenticated `jglass/startup/1` for configured-location Open-Meteo
+weather and ElevenLabs `mp3_22050_32` speech. Trusted-LAN binding is explicit;
+the service is not a public endpoint. Coordinates, device/provider secrets,
+voice IDs, spoken text, and audio are omitted from normal logs.
 
 ### Codex worker
 
@@ -101,9 +116,19 @@ directions.
 Foreground physical testing also verifies the selected GATT roles and control
 framing: Glass connected as the central, discovered both control
 characteristics, subscribed to the downlink, and completed fragmented
-hello/acknowledgement and ping/pong exchanges with the iPhone peripheral. This
-does not yet establish background wake, reconnection, authentication, or audio
-throughput.
+hello/acknowledgement and ping/pong exchanges with the iPhone peripheral.
+
+The feasibility diagnostic now separates maintained-connection wake from
+rediscovery/reconnection. Its connected mode sends five delayed pings on one
+subscribed GATT link; its reconnect mode performs five bounded close, wait,
+rediscover, reconnect, subscribe, and ping cycles after the baseline exchange.
+Only ephemeral counts, relative timing, and stable failure categories are shown.
+On the physical pair, all five delayed writes completed while the established
+connection remained locked in the background. Rediscovery did not: five cycles
+after a foreground exchange and all six cycles begun while ordinarily
+backgrounded ended `not_found`. The current gateway direction is therefore
+viable only while its GATT connection survives; reliable recovery after a drop
+remains an architecture blocker to resolve before depending on mobile access.
 
 An iPhone companion cannot become a universal notification reader. Service-specific replies may require app intents, shortcuts, deep links, or service APIs and should be designed separately.
 
@@ -164,4 +189,5 @@ One-shot camera capture is predictable, private, and inexpensive. Continuous str
 
 ## Decision records
 
-Architecture-changing choices belong in `docs/adr/`. Begin with `0001-thin-client.md`; add a new ADR rather than silently reversing it.
+Architecture-changing choices belong in `docs/adr/`. The startup bridge and
+reversible XE24 system branding are recorded in ADRs 0004 and 0005.

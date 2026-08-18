@@ -17,15 +17,27 @@ Apple Watch-equivalent iPhone integration is not assumed. Apple ANCS can expose 
 
 ## Status
 
-Early diagnostic implementation. The stock-XE24 Glass app has been exercised on
-the physical device, and a provider-free iPhone companion baseline builds and
-passes its tests in the iOS Simulator. No production AI relay or third-party
-application code has been imported yet.
+Early JGlass client implementation. The stock-XE24 Glass app has been exercised
+on the physical device, and a provider-free iPhone companion baseline builds and
+passes its tests in the iOS Simulator. A host-verified v0.5 client/bridge slice
+now adds once-daily startup weather and licensed speech, plus deterministic
+JGlass system-boot branding. The branded system image has now been physically
+flashed and the JGlass animation verified; provider-backed greeting behavior
+still requires physical verification.
 
 Current milestone: measure foreground/background GATT reliability and compressed
 BLE audio throughput. The physical Glass/iPhone pair has completed the bounded
 fragmented hello/ping exchange, while companion-owned HFP proved unusable for
-application audio.
+application audio. A bounded v0.4 reliability diagnostic now supports delayed
+connected pings and repeated rediscovery/reconnection attempts. Physical testing
+shows that an established GATT connection survives iPhone lock, while XE24 could
+not rediscover the companion after ordinary backgrounding or lock.
+
+In parallel, the trusted-LAN startup slice now has a dependency-free API-19
+Canvas loader, authenticated Node/TypeScript bridge, Open-Meteo attribution,
+ElevenLabs MP3 output, versioned fixed fallbacks, shared contract fixtures, and a
+reversible XE24 boot-animation patch. Secrets and coordinates remain outside the
+APK and repository.
 
 ## Repository map
 

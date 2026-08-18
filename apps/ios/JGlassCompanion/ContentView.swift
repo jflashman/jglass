@@ -36,8 +36,12 @@ struct ContentView: View {
 
             StatusRow(label: "Bluetooth", value: bluetooth.bluetoothState)
             StatusRow(label: "Gateway", value: bluetooth.gatewayState)
-            StatusRow(label: "Subscribers", value: String(bluetooth.subscriberCount))
-            StatusRow(label: "Last event", value: bluetooth.lastEvent)
+            StatusRow(label: "Connected", value: String(bluetooth.subscriberCount))
+            StatusRow(label: "Subscriptions", value: String(bluetooth.metrics.subscriptionEvents))
+            StatusRow(label: "Messages", value: String(bluetooth.metrics.completedMessages))
+            StatusRow(label: "Restorations", value: String(bluetooth.metrics.restorationEvents))
+            StatusRow(label: "Last event", value: bluetooth.metrics.lastEvent)
+            StatusRow(label: "Event time", value: bluetooth.metrics.lastEventTime)
 
             Button(bluetooth.isEnabled ? "Stop BLE Gateway" : "Start BLE Gateway") {
                 bluetooth.isEnabled ? bluetooth.stop() : bluetooth.start()

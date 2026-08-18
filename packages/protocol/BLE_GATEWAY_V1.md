@@ -87,6 +87,28 @@ and closes the GATT connection. It never sends credentials or user content.
 This exact 20-byte fragmented exchange was verified on the physical stock-XE24
 Glass and iPhone companion pair on 2026-08-17.
 
+The v0.4 reliability diagnostic reuses these exact messages in two bounded test
+modes; it does not expand the protocol allowlist:
+
+- `connected-wake`: one hello/ping exchange followed by five pings at 15-second
+  intervals on the same subscribed GATT connection;
+- `reconnect`: one initial exchange followed by five cycles that close the GATT
+  connection, wait 10 seconds, rediscover, reconnect, subscribe, and exchange a
+  new hello/ping pair.
+
+Each connection cycle uses a fresh ephemeral session ID. Each message within a
+maintained connection has a new request ID and monotonically increasing
+sequence. Unknown probe modes fall back to the one-shot behavior. These modes
+remain non-sensitive diagnostics and confer no authorization for audio, actions,
+or credentials.
+
+Physical testing on 2026-08-18 completed connected-wake `6/6` while the iPhone
+remained locked. Reconnect under lock completed `1/6`, with only the initial
+foreground cycle succeeding; a run begun while the companion was ordinarily
+backgrounded completed `0/6`. Every failed cycle ended `not_found` before GATT
+subscription, so these results concern discovery/reconnection rather than JSON
+or fragmentation failure.
+
 The initial limits are:
 
 - control message: 4 KiB maximum after reassembly;
