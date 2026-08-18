@@ -19,11 +19,17 @@ Apple Watch-equivalent iPhone integration is not assumed. Apple ANCS can expose 
 
 Early JGlass client implementation. The stock-XE24 Glass app has been exercised
 on the physical device, and a provider-free iPhone companion baseline builds and
-passes its tests in the iOS Simulator. A host-verified v0.5 client/bridge slice
-now adds once-daily startup weather and licensed speech, plus deterministic
-JGlass system-boot branding. The branded system image has now been physically
-flashed and the JGlass animation verified; provider-backed greeting behavior
-still requires physical verification.
+passes its tests in the iOS Simulator. A v0.6 client/bridge slice adds an
+automatic once-daily boot greeting, bounded network-readiness retries, licensed
+speech, and first-boot-safe bundled fallback audio alongside deterministic
+JGlass system branding. A v0.7 shell now also declares an opt-in JGlass Home
+activity so Android can enter the JGlass clock, greeting, assistant, and Settings
+surface without first displaying the stock timeline. The branded system image,
+receiver-based automatic launch, and bundled assistant-unavailable greeting have
+been physically verified. The owner-authorized Home-shell system image has also
+been flashed and cold-booted: JGlass is now the sole system Home, while signed
+XE24 Settings remains accessible. Provider-backed dynamic weather speech still
+requires physical verification.
 
 Current milestone: measure foreground/background GATT reliability and compressed
 BLE audio throughput. The physical Glass/iPhone pair has completed the bounded

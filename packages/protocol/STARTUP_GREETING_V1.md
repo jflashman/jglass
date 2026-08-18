@@ -10,12 +10,14 @@ Request:
 ```json
 {
   "protocol": "jglass/startup/1",
-  "fallbackVersion": "fallback-en-US-v1"
+  "fallbackVersion": "bundled-en-US-v2"
 }
 ```
 
-`fallbackVersion` is `null` before provisioning. The bridge includes
-`fallbackAssets` only when this value is missing or stale. Each asset is an
+Current Glass clients bundle their safety fallback assets and report their
+version immediately. The bridge retains the optional `fallbackAssets` field for
+compatibility with older clients and includes it only when the request version
+is missing or stale. Each legacy asset is an
 `audio/mpeg` Base64 value keyed by `morning`, `afternoon`, or `evening`; the fixed
 spoken text remains part of the client and bridge implementations rather than
 the public response.

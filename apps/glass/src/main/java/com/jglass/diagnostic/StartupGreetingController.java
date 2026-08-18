@@ -1,8 +1,13 @@
 package com.jglass.diagnostic;
 
+import android.bluetooth.BluetoothAdapter;
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.media.MediaPlayer;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,31 +23,67 @@ final class StartupGreetingController {
         void onFinished();
     }
 
+    private final Context context;
     private final StartupGreetingStore store;
     private final StartupGreetingClient client;
     private final Listener listener;
     private final Handler main = new Handler(Looper.getMainLooper());
     private boolean active;
     private boolean playbackStarted;
+    private boolean bootLaunch;
+    private boolean networkFinished;
+    private int requestAttempts;
+    private long networkDeadline;
     private MediaPlayer player;
+    private final Runnable retryNetwork = new Runnable() {
+        @Override
+        public void run() {
+            attemptBootRequest();
+        }
+    };
+    private final Runnable networkTimedOut = new Runnable() {
+        @Override
+        public void run() {
+            if (!active || playbackStarted || networkFinished) return;
+            client.cancel();
+            useFallback(currentLocalDate());
+        }
+    };
 
-    StartupGreetingController(StartupGreetingStore store, Listener listener) {
+    StartupGreetingController(Context context, StartupGreetingStore store, Listener listener) {
+        this.context = context.getApplicationContext();
         this.store = store;
         this.listener = listener;
         client = new StartupGreetingClient();
     }
 
-    boolean start(boolean force) {
+    boolean start(boolean force, boolean fromBoot) {
         cancel();
         final String today = StartupGreetingRules.localDate(new Date());
         if (!StartupGreetingRules.shouldStart(store.lastGreetingDate(), today, force)) return false;
         active = true;
         playbackStarted = false;
+        bootLaunch = fromBoot;
+        networkFinished = false;
+        requestAttempts = 0;
         store.deleteDynamic();
         if (store.bridgeUrl() == null || store.deviceToken() == null) {
             useFallback(today);
             return true;
         }
+        if (bootLaunch) {
+            networkDeadline = SystemClock.elapsedRealtime()
+                    + StartupGreetingRetryPolicy.BOOT_DEADLINE_MILLIS;
+            main.postDelayed(networkTimedOut, StartupGreetingRetryPolicy.BOOT_DEADLINE_MILLIS);
+            attemptBootRequest();
+        } else {
+            requestGreeting(today);
+        }
+        return true;
+    }
+
+    private void requestGreeting(final String today) {
+        requestAttempts += 1;
         client.request(store.bridgeUrl(), store.deviceToken(), store.fallbackVersion(),
                 new StartupGreetingClient.Listener() {
                     @Override
@@ -50,6 +91,7 @@ final class StartupGreetingController {
                         main.post(new Runnable() {
                             @Override
                             public void run() {
+                                if (networkFinished) return;
                                 handleResponse(today, response);
                             }
                         });
@@ -60,12 +102,33 @@ final class StartupGreetingController {
                         main.post(new Runnable() {
                             @Override
                             public void run() {
-                                useFallback(today);
+                                if (networkFinished) return;
+                                if (bootLaunch && active
+                                        && StartupGreetingRetryPolicy.shouldRetryRequest(
+                                                requestAttempts, remainingNetworkTime())) {
+                                    main.postDelayed(retryNetwork,
+                                            StartupGreetingRetryPolicy.REQUEST_RETRY_MILLIS);
+                                } else {
+                                    useFallback(today);
+                                }
                             }
                         });
                     }
                 });
-        return true;
+    }
+
+    private void attemptBootRequest() {
+        if (!active || networkFinished) return;
+        if (remainingNetworkTime() <= 0) {
+            useFallback(currentLocalDate());
+            return;
+        }
+        if (!networkConnected()) {
+            main.postDelayed(retryNetwork,
+                    StartupGreetingRetryPolicy.networkPollDelay(remainingNetworkTime()));
+            return;
+        }
+        requestGreeting(currentLocalDate());
     }
 
     void cancel() {
@@ -87,9 +150,9 @@ final class StartupGreetingController {
 
     private void handleResponse(String today, StartupGreetingProtocol.Response response) {
         if (!active) return;
+        finishNetworkPhase();
         try {
             if (!today.equals(response.greetingDate)) throw new IOException("Bridge date differs from Glass date");
-            if (response.fallbackAssets != null) store.installFallbacks(response.fallbackAssets);
             File dynamic = store.writeDynamic(response.audio.bytes);
             play(dynamic, today, response.weatherSummary, response.attribution, true);
         } catch (IOException ignored) {
@@ -99,15 +162,50 @@ final class StartupGreetingController {
 
     private void useFallback(String today) {
         if (!active) return;
+        finishNetworkPhase();
         Calendar calendar = Calendar.getInstance();
         StartupGreetingRules.Period period = StartupGreetingRules.periodForHour(
                 calendar.get(Calendar.HOUR_OF_DAY));
-        File fallback = store.fallbackFile(period);
-        if (fallback == null) {
-            listener.onTextOnlyUnavailable(StartupGreetingRules.fallbackText(period));
+        StartupGreetingRules.FallbackCause cause = fallbackCause();
+        try {
+            File fallback = store.bundledFallbackFile(period, cause);
+            play(fallback, today, "Nearby weather unavailable", "", false);
+        } catch (IOException failure) {
+            listener.onTextOnlyUnavailable(StartupGreetingRules.fallbackText(period, cause));
             return;
         }
-        play(fallback, today, "Nearby weather unavailable", "", false);
+    }
+
+    private void finishNetworkPhase() {
+        networkFinished = true;
+        client.cancel();
+        main.removeCallbacks(retryNetwork);
+        main.removeCallbacks(networkTimedOut);
+    }
+
+    private long remainingNetworkTime() {
+        return Math.max(0L, networkDeadline - SystemClock.elapsedRealtime());
+    }
+
+    private String currentLocalDate() {
+        return StartupGreetingRules.localDate(new Date());
+    }
+
+    private boolean networkConnected() {
+        ConnectivityManager manager = (ConnectivityManager) context.getSystemService(
+                Context.CONNECTIVITY_SERVICE);
+        if (manager == null) return false;
+        try {
+            NetworkInfo network = manager.getActiveNetworkInfo();
+            return network != null && network.isConnected();
+        } catch (SecurityException ignored) {
+            return false;
+        }
+    }
+
+    private StartupGreetingRules.FallbackCause fallbackCause() {
+        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+        return StartupGreetingRules.fallbackCause(adapter != null && adapter.isEnabled());
     }
 
     private void play(final File file, final String today, final String summary,

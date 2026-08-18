@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
@@ -32,6 +34,23 @@
         android:supportsRtl="false"
         android:theme="@style/AppTheme">
         <activity
+            android:name=".JGlassHomeActivity"
+            android:clearTaskOnLaunch="true"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:label="@string/home_app_name"
+            android:launchMode="singleTask"
+            android:screenOrientation="landscape"
+            android:stateNotNeeded="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.HOME" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".MainActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
             android:excludeFromRecents="true"
@@ -44,6 +63,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <receiver
+            android:name=".BootCompletedReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

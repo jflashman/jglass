@@ -11,9 +11,46 @@ public final class StartupGreetingProtocolSelfTest {
         require(args.length == 1, "fixture path is required");
         periodBoundaries();
         onceDailyRules();
+        fallbackRules();
+        retryRules();
         parsesSharedFixture(args[0]);
         rejectsMalformedJsonAndBase64();
         System.out.println("StartupGreetingProtocolSelfTest passed");
+    }
+
+    private static void fallbackRules() {
+        require("Good morning, sir. Bluetooth appears to be disabled.".equals(
+                StartupGreetingRules.fallbackText(
+                        StartupGreetingRules.Period.MORNING,
+                        StartupGreetingRules.FallbackCause.BLUETOOTH_DISABLED)),
+                "Bluetooth fallback wording");
+        require("Good evening, sir. The local assistant is unavailable.".equals(
+                StartupGreetingRules.fallbackText(
+                        StartupGreetingRules.Period.EVENING,
+                        StartupGreetingRules.FallbackCause.ASSISTANT_UNAVAILABLE)),
+                "assistant fallback wording");
+        require("startup_afternoon_bluetooth_disabled".equals(
+                StartupGreetingRules.fallbackResourceName(
+                        StartupGreetingRules.Period.AFTERNOON,
+                        StartupGreetingRules.FallbackCause.BLUETOOTH_DISABLED)),
+                "fallback resource name");
+        require(StartupGreetingRules.fallbackCause(false)
+                        == StartupGreetingRules.FallbackCause.BLUETOOTH_DISABLED,
+                "disabled Bluetooth cause");
+        require(StartupGreetingRules.fallbackCause(true)
+                        == StartupGreetingRules.FallbackCause.ASSISTANT_UNAVAILABLE,
+                "non-Bluetooth failure cause");
+    }
+
+    private static void retryRules() {
+        require(StartupGreetingRetryPolicy.shouldRetryRequest(1, 10_000L),
+                "retry within deadline");
+        require(!StartupGreetingRetryPolicy.shouldRetryRequest(3, 10_000L),
+                "bounded attempts");
+        require(!StartupGreetingRetryPolicy.shouldRetryRequest(1, 2_000L),
+                "bounded deadline");
+        require(StartupGreetingRetryPolicy.networkPollDelay(500L) == 500L,
+                "short final network poll");
     }
 
     private static void periodBoundaries() {
@@ -40,7 +77,8 @@ public final class StartupGreetingProtocolSelfTest {
         require(StartupGreetingProtocol.ATTRIBUTION.equals(response.attribution), "attribution");
         require(response.audio.bytes.length == 4, "dynamic audio");
         require(response.fallbackAssets != null, "fallback assets");
-        require("fallback-en-US-v1".equals(response.fallbackAssets.version), "fallback version");
+        require(StartupGreetingRules.BUNDLED_FALLBACK_VERSION.equals(
+                response.fallbackAssets.version), "fallback version");
         require(response.fallbackAssets.evening.bytes[3] == 3, "period-specific fallback");
     }
 

@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">JGlass</string>
+    <string name="home_app_name">JGlass Home</string>
+    <string name="home_brand">JGLASS</string>
+    <string name="home_ready">Assistant ready</string>
+    <string name="home_ready_detail">Local shell · private bridge</string>
+    <string name="home_controls">Tap for assistant · Swipe down for settings</string>
+    <string name="home_settings_unavailable">System settings are unavailable</string>
     <string name="title">JGLASS</string>
     <string name="startup_brand">JGLASS</string>
     <string name="startup_connecting">Initializing local assistant…</string>

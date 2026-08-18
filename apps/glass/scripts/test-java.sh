@@ -30,6 +30,7 @@ fi
     "$glass_dir/src/main/java/com/jglass/diagnostic/StrictJson.java" \
     "$glass_dir/src/main/java/com/jglass/diagnostic/Base64Codec.java" \
     "$glass_dir/src/main/java/com/jglass/diagnostic/StartupGreetingRules.java" \
+    "$glass_dir/src/main/java/com/jglass/diagnostic/StartupGreetingRetryPolicy.java" \
     "$glass_dir/src/main/java/com/jglass/diagnostic/StartupGreetingProtocol.java" \
     "$glass_dir/src/testsupport/java/com/jglass/diagnostic/BoundedPcmBufferSelfTest.java" \
     "$glass_dir/src/testsupport/java/com/jglass/diagnostic/BleAdvertisementMatcherSelfTest.java" \

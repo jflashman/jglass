@@ -1,16 +1,37 @@
 import { resolve } from "node:path";
 
-export interface BridgeConfig {
-  bindHost: string;
-  port: number;
-  deviceToken: string;
+export interface SpeechConfig {
   elevenLabsApiKey: string;
   elevenLabsVoiceId: string;
   elevenLabsModelId: string;
+}
+
+export interface BridgeConfig extends SpeechConfig {
+  bindHost: string;
+  port: number;
+  deviceToken: string;
   weatherLatitude: number;
   weatherLongitude: number;
   timeZone: string;
   dataDirectory: string;
+}
+
+export function loadSpeechConfig(environment: NodeJS.ProcessEnv = process.env): SpeechConfig {
+  const voiceId = required(environment, "ELEVENLABS_VOICE_ID");
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(voiceId)) {
+    throw new Error("ELEVENLABS_VOICE_ID contains unsupported characters");
+  }
+
+  const modelId = environment.ELEVENLABS_MODEL_ID?.trim() || "eleven_flash_v2_5";
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(modelId)) {
+    throw new Error("ELEVENLABS_MODEL_ID contains unsupported characters");
+  }
+
+  return {
+    elevenLabsApiKey: required(environment, "ELEVENLABS_API_KEY"),
+    elevenLabsVoiceId: voiceId,
+    elevenLabsModelId: modelId,
+  };
 }
 
 function required(environment: NodeJS.ProcessEnv, name: string): string {
@@ -45,15 +66,7 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): Bridge
     throw new Error("JGLASS_DEVICE_TOKEN must contain at least 32 characters");
   }
 
-  const voiceId = required(environment, "ELEVENLABS_VOICE_ID");
-  if (!/^[A-Za-z0-9_-]{1,128}$/.test(voiceId)) {
-    throw new Error("ELEVENLABS_VOICE_ID contains unsupported characters");
-  }
-
-  const modelId = environment.ELEVENLABS_MODEL_ID?.trim() || "eleven_flash_v2_5";
-  if (!/^[A-Za-z0-9_-]{1,128}$/.test(modelId)) {
-    throw new Error("ELEVENLABS_MODEL_ID contains unsupported characters");
-  }
+  const speech = loadSpeechConfig(environment);
 
   const timeZone = required(environment, "JGLASS_TIME_ZONE");
   if (!validTimeZone(timeZone)) {
@@ -74,9 +87,7 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): Bridge
     bindHost,
     port,
     deviceToken: token,
-    elevenLabsApiKey: required(environment, "ELEVENLABS_API_KEY"),
-    elevenLabsVoiceId: voiceId,
-    elevenLabsModelId: modelId,
+    ...speech,
     weatherLatitude: coordinate(environment, "JGLASS_WEATHER_LATITUDE", -90, 90),
     weatherLongitude: coordinate(environment, "JGLASS_WEATHER_LONGITUDE", -180, 180),
     timeZone,
