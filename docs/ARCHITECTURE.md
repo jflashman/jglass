@@ -35,16 +35,23 @@ Responsibilities:
 - intentional one-shot camera capture;
 - small, readable streaming response cards;
 - audio playback and interruption;
+- the primary Home/idle shell, including time, assistant entry, and a Settings
+  recovery gesture (swipe down/Back);
 - authenticated connection to the bridge;
 - no long-lived provider credentials.
 
-At application launch, Glass runs a once-per-local-calendar-day startup state
-machine before exposing the ordinary ready card. It animates locally, sends a
-bounded authenticated Wi-Fi request, validates the complete response before
-writing audio, displays Open-Meteo attribution with dynamic weather, and deletes
-dynamic MP3 data after playback. Only three fixed period-specific offline clips,
-their version, the revocable bridge configuration, and last playback date are
-retained in app-private storage. A debug-only launch extra can force replay.
+When selected as the device Home, JGlass begins the daily greeting from its Home
+activity as soon as Android requests a launcher, without waiting for
+`BOOT_COMPLETED` or displaying the stock timeline. When JGlass is not the
+resolved default Home, a minimal compatibility receiver schedules the Glass app
+three seconds after boot only when that local calendar day still needs a
+greeting. The Activity owns the visible
+loader, a 30-second bounded network-readiness/request phase, response validation,
+and playback; the receiver performs no network or audio work. Dynamic MP3 data
+is deleted after playback. Six fixed licensed clips bundled in the APK cover
+morning/afternoon/evening for either confirmed Bluetooth-off or general local
+assistant failure. A debug-only private replay mode can force repeated boot
+testing while release behavior remains once daily.
 
 Constraints:
 
@@ -177,7 +184,14 @@ Every request and side effect needs an ID so reconnects do not accidentally repe
 
 ### Stock XE24 versus AOSP 5.1.1
 
-Stock XE24 preserves the native Glass UX and GDK integration but is constrained and old. AOSP 5.1.1 offers a more conventional rooted Android environment and supports some recent community work, but sacrifices parts of the original experience and remains obsolete. Stay on XE24 until a documented blocker justifies switching.
+Official XE24 preserves the verified Glass hardware drivers, GDK integration,
+Settings, and a known recovery route, but its stock UX is no longer a product
+constraint. JGlass may replace Home and other user-facing flows while initially
+retaining the signed XE24 framework, Settings, and hardware services underneath.
+The physically verified v0.7 system image removes only the stock Home APK and
+embeds JGlass as the sole Home candidate. AOSP 5.1.1 remains an option only when
+a documented framework limitation justifies its recovery and compatibility
+cost.
 
 ### Push-to-talk versus wake word
 
@@ -189,5 +203,6 @@ One-shot camera capture is predictable, private, and inexpensive. Continuous str
 
 ## Decision records
 
-Architecture-changing choices belong in `docs/adr/`. The startup bridge and
-reversible XE24 system branding are recorded in ADRs 0004 and 0005.
+Architecture-changing choices belong in `docs/adr/`. The startup bridge,
+reversible XE24 system branding, and JGlass-owned Home shell are recorded in
+ADRs 0004 through 0006.

@@ -21,9 +21,11 @@ Do not expose raw SSH, VNC, ADB, the bridge development server, or a Codex worke
 The startup bridge binds to loopback unless the operator explicitly selects a
 trusted-LAN address. Its device bearer token, ElevenLabs key/voice ID, weather
 coordinates, spoken text, and audio are excluded from normal logs. Glass stores
-only its bridge URL, revocable device token, last greeting date, and fixed
-fallback MP3s in app-private storage. Dynamic weather audio is deleted after
-playback; camera, microphone, and notification capture are not part of startup.
+only its bridge URL, revocable device token, last greeting date, debug replay
+mode, and app-private copies of fixed APK fallback MP3s. Dynamic weather audio
+is deleted after playback; camera, microphone, and notification capture are not
+part of startup. The boot receiver performs only a local daily-rule check and
+Activity launch; it never handles credentials, networking, or audio.
 
 ## Device safety
 

@@ -44,6 +44,18 @@ npm run build
 node dist/src/server.js
 ```
 
+Generate the six licensed boot fallback assets after sourcing the ignored
+environment and before building the release APK. This command requires only the
+three `ELEVENLABS_*` values; weather and device configuration are not involved:
+
+```sh
+npm run generate:boot-fallbacks
+```
+
+The generator writes only MP3s under `apps/glass/src/main/res/raw/` and
+non-secret provenance/hashes under `docs/assets/`. It never writes the provider
+key or voice ID. Do not substitute a cloned or impersonated voice.
+
 The default listener is `127.0.0.1:8787`. Trusted-LAN binding is an explicit
 operator decision, for example `JGLASS_BIND_HOST=192.0.2.10`; do not bind to
 `0.0.0.0`, forward the port, or expose it to the public internet. Permit only the
@@ -56,6 +68,7 @@ Requests are bounded and timed out, redirects are rejected, and response audio
 type/signature/size are checked. Logs contain event name, status, and duration
 only—not keys, tokens, voice IDs, coordinates, spoken text, or audio.
 
-Only fixed morning/afternoon/evening fallback MP3s are cached under the ignored
-bridge data directory. Dynamic weather audio is returned in memory and not
+Legacy fixed morning/afternoon/evening fallback MP3s may be cached under the
+ignored bridge data directory for older clients. Current v0.6 clients bundle
+their safety fallbacks. Dynamic weather audio is returned in memory and not
 written by the bridge.

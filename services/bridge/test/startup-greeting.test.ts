@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import type { BridgeConfig } from "../src/config.js";
-import { loadConfig } from "../src/config.js";
+import { loadConfig, loadSpeechConfig } from "../src/config.js";
 import {
   createStartupResponse,
   FALLBACK_VERSION,
@@ -66,6 +66,14 @@ test("environment validation and defaults", () => {
     JGLASS_DEVICE_TOKEN: secret.repeat(3),
     JGLASS_BIND_HOST: "0.0.0.0",
   }), /specific trusted-LAN address/);
+  assert.deepEqual(loadSpeechConfig({
+    ELEVENLABS_API_KEY: secret,
+    ELEVENLABS_VOICE_ID: "voice_1",
+  }), {
+    elevenLabsApiKey: secret,
+    elevenLabsVoiceId: "voice_1",
+    elevenLabsModelId: "eleven_flash_v2_5",
+  });
 });
 
 test("shared response fixture matches the bridge contract", async () => {
@@ -88,7 +96,7 @@ test("period boundaries and weather wording", () => {
   assert.equal(weatherCodeToWords(0), "clear");
   assert.equal(weatherCodeToWords(48), "foggy");
   assert.equal(weatherCodeToWords(96), "stormy");
-  assert.equal(fallbackText("morning"), "Good morning, sir. Nearby weather is unavailable. The Bluetooth assistant connection is not properly configured.");
+  assert.equal(fallbackText("morning"), "Good morning, sir. The local assistant is unavailable.");
 });
 
 test("request parser rejects unsupported and oversized values", () => {
@@ -200,7 +208,7 @@ test("fallback provisioning failure does not discard a dynamic greeting", async 
     fetch: async (input, init) => {
       if (String(input).includes("open-meteo")) return weatherResponse();
       const request = JSON.parse(String(init?.body)) as { text: string };
-      if (request.text.includes("weather is unavailable")) return new Response("failed", { status: 503 });
+      if (request.text.includes("assistant is unavailable")) return new Response("failed", { status: 503 });
       return new Response(new Uint8Array([0x49, 0x44, 0x33]), { headers: { "content-type": "audio/mpeg" } });
     },
     now: () => new Date("2026-08-18T13:00:00Z"),

@@ -5,6 +5,8 @@ import java.util.Date;
 import java.util.Locale;
 
 final class StartupGreetingRules {
+    static final String BUNDLED_FALLBACK_VERSION = "bundled-en-US-v2";
+
     enum Period {
         MORNING("morning"),
         AFTERNOON("afternoon"),
@@ -21,6 +23,17 @@ final class StartupGreetingRules {
                 if (period.value.equals(value)) return period;
             }
             throw new IllegalArgumentException("Unsupported greeting period");
+        }
+    }
+
+    enum FallbackCause {
+        BLUETOOTH_DISABLED("bluetooth_disabled"),
+        ASSISTANT_UNAVAILABLE("assistant_unavailable");
+
+        final String value;
+
+        FallbackCause(String value) {
+            this.value = value;
         }
     }
 
@@ -41,8 +54,20 @@ final class StartupGreetingRules {
         return force || lastGreetingDate == null || !lastGreetingDate.equals(today);
     }
 
-    static String fallbackText(Period period) {
-        return "Good " + period.value
-                + ", sir. Nearby weather is unavailable. The Bluetooth assistant connection is not properly configured.";
+    static String fallbackText(Period period, FallbackCause cause) {
+        String reason = cause == FallbackCause.BLUETOOTH_DISABLED
+                ? "Bluetooth appears to be disabled."
+                : "The local assistant is unavailable.";
+        return "Good " + period.value + ", sir. " + reason;
+    }
+
+    static FallbackCause fallbackCause(boolean bluetoothEnabled) {
+        return bluetoothEnabled
+                ? FallbackCause.ASSISTANT_UNAVAILABLE
+                : FallbackCause.BLUETOOTH_DISABLED;
+    }
+
+    static String fallbackResourceName(Period period, FallbackCause cause) {
+        return "startup_" + period.value + "_" + cause.value;
     }
 }

@@ -1,8 +1,9 @@
 # JGlass client
 
-The v0.5 implementation is the JGlass client for the physical XE24 unit. Its
-existing provider-free diagnostics remain available after the once-daily startup
-weather and speech experience.
+The v0.7 implementation is the JGlass client and first replacement shell for the
+physical XE24 unit. Its provider-free diagnostics remain available behind an
+opt-in JGlass Home activity and the automatic once-daily weather and speech
+experience.
 
 Baseline constraints:
 
@@ -13,10 +14,22 @@ Baseline constraints:
 - push-to-talk before wake word;
 - one-shot camera capture before continuous vision.
 
-On the first launch of each local calendar day, the app runs the concentric-ring
-loader, requests an authenticated greeting from the trusted-LAN bridge, displays
-the weather summary and Open-Meteo attribution, and plays the returned MP3. It
-then exposes the existing diagnostic features:
+When JGlass is selected as Android's Home app, Android launches its clock and
+assistant surface directly and the daily greeting begins there; the stock Glass
+timeline does not need to settle first. Tap opens the assistant/diagnostic
+activity. Swipe down/Back opens system Settings; Menu remains a secondary
+recovery input. The APK alone does not delete or disable the signed stock
+launcher. The separately verified Home-shell system image removes only the stock
+`GlassHome.apk` after explicit owner approval.
+
+When JGlass is not the selected Home, a short-lived boot receiver preserves the
+v0.6 compatibility behavior: it schedules JGlass three seconds after
+`BOOT_COMPLETED` only when the local daily greeting is due. The Activity runs the
+concentric-ring loader, waits
+up to 30 seconds for networking, makes no more than three authenticated requests
+to the trusted-LAN bridge, displays the weather summary and Open-Meteo
+attribution, and plays the returned MP3. It then exposes the existing diagnostic
+features:
 
 - renders a 640x360-friendly status card;
 - uses tap/center-key input to start and stop a five-second maximum recording;
@@ -45,11 +58,12 @@ The foreground GATT exchange is implemented and physically verified; background
 wake and reconnect behavior still require physical verification.
 
 Morning is 05:00–11:59, afternoon 12:00–17:59, and evening 18:00–04:59 in the
-Glass local timezone. The date is recorded only when dynamic or cached fallback
-playback begins. A request cancelled before playback remains eligible on the next
-launch. Dynamic MP3s are deleted after playback. Fixed fallback MP3s remain in
-app-private storage and refresh when the bridge version changes; before their
-first successful provisioning, bridge failure is text-only and is not counted.
+Glass local timezone. The date is recorded only when dynamic or bundled fallback
+playback begins. A request cancelled before playback remains eligible on the
+next launch. Dynamic MP3s are deleted after playback. Six fixed licensed MP3s
+are bundled for the three periods and two causes. A confirmed disabled Bluetooth
+adapter uses the Bluetooth-specific line; all other local bridge/provider
+failures use the local-assistant-unavailable line.
 
 ## Private startup provisioning
 
@@ -73,8 +87,36 @@ adb shell am start -n com.jglass.diagnostic/.MainActivity \
   --ez force_startup_greeting true
 ```
 
-Release builds ignore provisioning and force-greeting extras. A production
-enrollment and token-rotation UI remains future work.
+Set the persisted debug boot policy to replay on every boot:
+
+```sh
+adb shell am start -n com.jglass.diagnostic/.MainActivity \
+  --es startup_replay_mode always
+```
+
+Restore production-like daily behavior with `--es startup_replay_mode daily`.
+Release builds ignore this extra and always enforce the daily rule. Android does
+not deliver boot broadcasts to a newly installed force-stopped package until it
+has been launched once, so provisioning also activates the installed debug APK.
+
+Release builds ignore provisioning, replay-mode, and force-greeting extras. A
+production enrollment and token-rotation UI remains future work.
+
+Force the Home-owned greeting in a debug build without changing the daily rule:
+
+```sh
+adb shell am start -n com.jglass.diagnostic/.JGlassHomeActivity \
+  --ez force_startup_greeting true
+```
+
+Installing v0.7 only registers JGlass as a Home candidate. Selecting it as the
+default is an intentional device-side action. Do not clear stock launcher data,
+disable its package, or delete signed XE24 applications to make the selection.
+The original XE24 image retained an `mAlways=true` preferred activity for the
+stock timeline, so installation alone did not make JGlass permanent. The
+physically flashed Home-shell system image embeds this exact APK and removes only
+the stock Home APK, making JGlass the sole Home candidate while retaining signed
+Settings and System UI.
 
 ## XE24 system branding
 
@@ -175,18 +217,33 @@ For the startup slice, additionally:
 
 1. Match bridge `JGLASS_TIME_ZONE` to the Glass timezone and start the bridge on
    an explicitly trusted-LAN address.
-2. Provision the debug APK over authorized ADB and force the greeting.
-3. Confirm the rings fit 640×360 and animate smoothly, then confirm weather text
+2. Provision the debug APK over authorized ADB, set replay mode to `always`, and
+   reboot normally. Do not flash or erase any partition.
+3. Confirm JGlass opens after the system animation, the rings fit 640×360 and
+   animate smoothly, then confirm weather text
    and `Weather data by Open-Meteo.com` are legible while speech plays on Glass.
-4. Relaunch normally and confirm the greeting does not repeat that calendar day.
-5. Stop the bridge and force replay after fallback provisioning; confirm the
-   correct local-period fallback plays and counts for the date.
-6. Leave the activity during animation, download, and playback in separate runs;
+4. With the bridge stopped and Bluetooth enabled, force replay and confirm the
+   period-correct local-assistant-unavailable clip.
+5. Disable Bluetooth, force replay again, and confirm the period-correct
+   Bluetooth-disabled clip; then restore Bluetooth.
+6. Set replay mode to `daily`, force one greeting, and reboot again; confirm the
+   same-day boot remains silent and does not open JGlass.
+7. Leave the activity during animation, download, and playback in separate runs;
    confirm cancellation and dynamic-audio deletion.
-7. Return to ready and repeat audio loopback plus the bounded BLE probe to guard
+8. Return to ready and repeat audio loopback plus the bounded BLE probe to guard
    the existing physical baseline.
 
-None of these new startup cases has yet been verified on the physical XE24.
+The automatic boot launch and bundled local-assistant-unavailable greeting were
+verified on the physical XE24 on 2026-08-18. Android displayed JGlass after the
+three-second scheduled wakeup and Joshua heard the correct period greeting. The
+provider-backed greeting, Bluetooth-disabled fallback, same-day skip, and
+cancellation matrix remain unverified.
+
+The v0.7 Home activity was also installed and explicitly launched on the same
+unit. Center-key input opened `MainActivity`, Back returned to JGlass Home, and
+swipe down/Back opened the signed XE24 Settings activity through the verified
+Glass action. The owner accepted the clock layout. The system-Home image was then
+flashed and cold-booted successfully; ADB verified JGlass as the resumed Home.
 
 ## BLE reliability test matrix
 
@@ -229,7 +286,8 @@ Verified on 2026-08-17:
   pass on the development host;
 - Android lint passes with zero errors;
 - the debug APK assembles and is API 19 compatible;
-- permissions are limited to `INTERNET`, `RECORD_AUDIO`, `BLUETOOTH`, and
+- permissions are limited to `INTERNET`, `ACCESS_NETWORK_STATE`,
+  `RECEIVE_BOOT_COMPLETED`, `RECORD_AUDIO`, `BLUETOOTH`, and
   `BLUETOOTH_ADMIN` for API 19, plus the forward-compatible
   `BLUETOOTH_CONNECT` and non-location `BLUETOOTH_SCAN` declarations used by
   modern lint;
@@ -277,8 +335,9 @@ backgrounded and unlocked completed `0/6 last=not_found`. Companion counters
 confirmed that the failed cycles never subscribed or delivered a control
 message, and no Core Bluetooth restoration callback occurred.
 
-Not yet verified on the physical device: cancellation while recording or
-playing, a real LAN health probe, camera capture, Wi-Fi transport behavior,
+Not yet verified on the physical device: provider-backed startup speech, the
+Bluetooth-disabled fallback, cancellation while recording or playing, a real
+LAN health probe, camera capture, Wi-Fi transport behavior,
 microphone isolation during an ordinary phone call, or audio throughput. A
 companion-owned HFP session was tested separately and is not usable as the JGlass
 application audio path.

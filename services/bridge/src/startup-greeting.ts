@@ -1,9 +1,9 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { BridgeConfig } from "./config.js";
+import type { BridgeConfig, SpeechConfig } from "./config.js";
 
 export const STARTUP_PROTOCOL = "jglass/startup/1";
-export const FALLBACK_VERSION = "fallback-en-US-v1";
+export const FALLBACK_VERSION = "bundled-en-US-v2";
 export const MAX_RESPONSE_BYTES = 512 * 1024;
 const MAX_AUDIO_BYTES = 256 * 1024;
 const MAX_FALLBACK_AUDIO_BYTES = 128 * 1024;
@@ -135,7 +135,7 @@ export function weatherCodeToWords(code: number): string {
 }
 
 export function fallbackText(period: GreetingPeriod): string {
-  return `Good ${period}, sir. Nearby weather is unavailable. The Bluetooth assistant connection is not properly configured.`;
+  return `Good ${period}, sir. The local assistant is unavailable.`;
 }
 
 function dateParts(date: Date, timeZone: string): { date: string; hour: number } {
@@ -253,7 +253,8 @@ async function readBounded(response: Response, maximum: number): Promise<Uint8Ar
   return result;
 }
 
-async function synthesize(config: BridgeConfig, requestFetch: typeof fetch, signal: AbortSignal, text: string, maximum = MAX_AUDIO_BYTES): Promise<Uint8Array> {
+export async function synthesizeSpeech(config: SpeechConfig, requestFetch: typeof fetch,
+  signal: AbortSignal, text: string, maximum = MAX_AUDIO_BYTES): Promise<Uint8Array> {
   const voiceId = encodeURIComponent(config.elevenLabsVoiceId);
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_22050_32`;
   const response = await requestFetch(url, {
@@ -287,7 +288,7 @@ async function provisionFallbacks(
   const periods: GreetingPeriod[] = ["morning", "afternoon", "evening"];
   const entries = await Promise.all(periods.map(async (period) => {
     const audio = await dependencies.fallbackStore.getOrCreate(period, () =>
-      synthesize(config, dependencies.fetch, signal, fallbackText(period), MAX_FALLBACK_AUDIO_BYTES));
+      synthesizeSpeech(config, dependencies.fetch, signal, fallbackText(period), MAX_FALLBACK_AUDIO_BYTES));
     return [period, encoded(audio)] as const;
   }));
   return {
@@ -309,7 +310,7 @@ export async function createStartupResponse(
     : provisionFallbacks(config, dependencies, signal).catch(() => null);
   const weather = await fetchWeather(config, dependencies.fetch, signal, local.date);
   const spokenText = spokenWeather(period, weather);
-  const audio = await synthesize(config, dependencies.fetch, signal, spokenText);
+  const audio = await synthesizeSpeech(config, dependencies.fetch, signal, spokenText);
   const response: StartupResponse = {
     protocol: STARTUP_PROTOCOL,
     greetingDate: local.date,

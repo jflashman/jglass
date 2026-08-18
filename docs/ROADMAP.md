@@ -71,17 +71,38 @@ routing and reconnection limitations are documented from physical tests.
 ### Daily startup slice
 
 - [x] Add API-19 Canvas JGlass loader and once-per-day state rules.
+- [x] Add an API-19 boot receiver, bounded readiness retries, and debug-only
+  every-boot replay control.
 - [x] Add authenticated weather/TTS protocol, strict response bounds, and shared
   Glass/bridge fixtures.
 - [x] Add Open-Meteo Fahrenheit summaries and visible attribution.
-- [x] Add versioned period-specific fallback provisioning and ephemeral dynamic
-  audio handling.
+- [x] Add versioned period/cause-specific bundled fallback handling and
+  ephemeral dynamic audio handling, including licensed binary clips generated
+  under the project owner's paid Creator plan.
 - [x] Build and host-verify a reversible JGlass XE24 boot-animation system image.
 - [x] Flash and verify the JGlass system boot animation on the physical XE24.
   The earlier stock `GLASS` boot phase remains visible briefly before the new
   JGlass system animation; this two-stage sequence is accepted for now.
-- [ ] Verify successful, offline-fallback, same-day-skip, debug-force, and
-  cancellation behavior on the physical XE24.
+- [ ] Verify automatic boot launch, successful speech, both offline fallbacks,
+  same-day skip, debug replay, and cancellation on the physical XE24.
+
+### JGlass system shell
+
+- [x] Register an API-19 JGlass Home activity without deleting or disabling the
+  signed stock launcher.
+- [x] Move the daily greeting into Home and suppress the delayed boot receiver
+  when JGlass is the selected default.
+- [x] Add a 640×360 clock/status surface with assistant entry and a direct
+  system-Settings gesture.
+- [x] Make JGlass the sole system Home and verify a successful physical cold
+  boot, center-to-assistant, Back-to-Home, and Home-Back-to-signed-Settings.
+  Touchpad hold is not a reliable plain-Android long-press gesture on the tested
+  shell, so swipe down/Back is the supported Settings gesture.
+- [ ] Verify display sleep/wake and crash recovery with JGlass as system Home.
+- [ ] Physically verify rollback by flashing the preserved branded or official
+  XE24 system image and confirming the stock Home returns.
+- [ ] Replace the diagnostic assistant entry with the production push-to-talk
+  conversation surface.
 
 Acceptance: on a trusted LAN, ask a spoken question and hear/see the response on Glass without storing credentials on the device.
 

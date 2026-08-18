@@ -57,6 +57,85 @@ phase's storage location has not been verified and must not be described as a
 system-partition asset without further evidence. The established Kali host
 remains the fallback for bootloader recovery.
 
+The v0.6 application release adds a normal-permission `BOOT_COMPLETED` receiver
+that schedules JGlass three seconds later only when the local daily greeting is
+due. The delay and boot-only screen flags are required because a physical XE24
+test showed an immediate Activity creation did not reach resumed playback.
+Network waiting and
+playback remain in the Activity behind a 30-second deadline; the receiver is
+deliberately short-lived. Production remains once per day, with a debug-only
+private replay mode for repeated boot tests. This application behavior has not
+modified firmware or the boot animation. The corrected receiver path was later
+physically verified as described below.
+
+On the physical XE24 unit, the first immediate receiver launch created the
+Activity but did not reach audible playback before the Glass home lifecycle
+intervened. The corrected build scheduled a three-second `AlarmManager` wakeup
+and used boot-only screen flags. On the next normal reboot, the stock home was
+created at 15:35:30, `BOOT_COMPLETED` reached JGlass at 15:35:41, JGlass launched
+at 15:35:44, and Android reported it displayed at 15:35:45. Joshua heard the
+bundled local-assistant-unavailable greeting. The remaining visible stock-home
+gap motivates a separate reversible home-replacement experiment; it does not
+authorize deleting or modifying the signed Glass home package.
+
+On 2026-08-18, Joshua clarified that the intended end state is a substantially
+JGlass-owned device experience rather than preservation of the stock timeline
+and bundled applications. Settings must remain accessible, but stock user-facing
+features do not need to remain part of the primary workflow. The first response
+to that direction is an opt-in API-19 `HOME` activity: JGlass owns the clock,
+daily greeting, and assistant entry surface, while swipe down/Back or Menu opens
+system Settings. Read-only package inspection verified that XE24 exposes its
+signed Settings UI through `com.google.glass.action.ACTION_GO_TO_SETTINGS`, not
+the standard `android.settings.SETTINGS` action, so the shell uses the standard
+action when available and the verified Glass action as its fallback. The first
+APK-only test retained the signed stock launcher as a recovery path. The owner
+subsequently authorized a system-only Fastboot change to establish JGlass as the
+device Home; that authorization did not include userdata, boot, recovery, or
+bootloader changes.
+
+Version 0.7.0 was installed and `JGlassHomeActivity` was launched explicitly on
+the physical unit without changing the Home preference. Center input resumed the
+existing JGlass assistant/diagnostic activity, Back returned to JGlass Home, and
+swipe-down/Back from Home resumed the signed XE24 Settings activity. A touchpad
+hold did not reliably produce the plain Android long-press callback, so it is not
+the advertised Settings path. The owner's visual fit check and cold-boot/default
+Home test remain pending. Read-only package state showed an existing
+`mAlways=true` preferred `MAIN`/`DEFAULT`/`HOME` activity pointing to
+`com.google.glass.home/.timeline.MainTimelineActivity`; its recorded candidate
+set predates JGlass. Installing a new Home candidate therefore did not surface a
+chooser or replace the preferred timeline.
+
+After the stock package manager refused package/component disable requests and
+the Glass resolver treated JGlass as a one-time choice, an owner-authorized
+second-layer sparse system image was built from the exact branded image already
+flashed. The helper removed only `/priv-app/GlassHome.apk`, embedded the exact
+tested JGlass 0.7.0 APK as `/priv-app/JGlass.apk`, preserved the boot animation,
+set root ownership/mode 0644/the stock `system_file` SELinux label, and passed
+ext4 check plus re-expand and byte-comparison verification. The final sparse
+image SHA-256 is
+`e9dd28f7051ca5a48bc29e53c74de8a6b115e83f04310a8de8237d2f3be07a1f`.
+
+Two macOS attempts made after a separate successful `fastboot getvar product`
+stalled before reporting any send/write stage and left the existing system
+intact. The reliable sequence on this exact host is to verify `glass-1` from
+healthy Android, use `adb reboot bootloader`, and make the chunked flash the
+first Fastboot process in that USB session. With that sequence, Fastboot 37.0.1
+completed all ten `-S 64M` send/write pairs with `OKAY` and exited successfully
+after 103.713 seconds. The subsequent `fastboot reboot` client again hung after
+issuing `Rebooting`, so it was stopped and Glass was physically power-cycled.
+Android booted successfully. Post-boot ADB verification reported boot complete,
+`/system/priv-app/JGlass.apk` present, `GlassHome.apk` absent, and
+`JGlassHomeActivity` as the resumed Home.
+
+The post-flash device cleanup confirmed PackageManager executes only the
+privileged `/system/priv-app/JGlass.apk`; there is no duplicate `/data/app`
+update or `/data/local/tmp` installer. No dynamic speech or temporary speech
+file remained. The obsolete JGlass-owned OpenGL shader cache was removed and the
+debug boot replay override was restored from `always` to production-like
+`daily`. The current licensed v2 fallback clips, bridge configuration, stock
+Home userdata for rollback, signed Settings, and host recovery images were
+preserved. JGlass Home remained the resumed activity after cleanup.
+
 ### Verified diagnostic behavior
 
 On 2026-08-17, the first JGlass diagnostic APK was built on Kali, installed over
@@ -226,9 +305,12 @@ Several of the most attractive repositories have no declared license. Their beha
 - Add the Codex computer worker only after the ordinary assistant loop works.
 - Treat iPhone notification support as an independent experiment.
 - Revisit rooted AOSP 5.1.1 only if measured XE24 limitations block the project.
-- Keep the XE24 firmware and signed system applications, but replace the stock
-  boot animation through a reversible patched official system image. Do not root
-  or live-remount the device for branding.
+- Use official XE24 as the first hardware, driver, framework, and recovery base,
+  but allow JGlass to replace the Home surface and other user-facing workflows.
+  Keep system Settings and a tested rollback path accessible. Do not delete or
+  disable signed stock packages merely to establish the first launcher.
+- Replace the stock boot animation through a reversible patched official system
+  image. Do not root or live-remount the device for branding.
 - Use a minimal Node/TypeScript trusted-LAN startup bridge with Open-Meteo and
   ElevenLabs before broad assistant orchestration.
 

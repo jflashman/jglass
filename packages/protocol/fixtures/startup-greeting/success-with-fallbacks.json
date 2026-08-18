@@ -9,7 +9,7 @@
   },
   "audio": { "mimeType": "audio/mpeg", "dataBase64": "SUQzAQ==" },
   "fallbackAssets": {
-    "version": "fallback-en-US-v1",
+    "version": "bundled-en-US-v2",
     "clips": {
       "morning": { "mimeType": "audio/mpeg", "dataBase64": "SUQzAQ==" },
       "afternoon": { "mimeType": "audio/mpeg", "dataBase64": "SUQzAg==" },

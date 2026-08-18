@@ -20,7 +20,7 @@ Requirements:
   diagnostic messages, GATT UUIDs, safety limits, and the security work required
   before sensitive data is permitted.
 - [Startup greeting v1](STARTUP_GREETING_V1.md): authenticated trusted-LAN
-  weather, speech, and fixed fallback provisioning.
+  weather, speech, and legacy fixed-fallback provisioning compatibility.
 
 Canonical examples live in `fixtures/`. Fixtures contain synthetic identifiers
 only and must never be replaced with captured production traffic.

@@ -24,6 +24,9 @@ public final class MainActivity extends Activity implements
     public static final String EXTRA_STARTUP_BRIDGE_URL = "startup_bridge_url";
     public static final String EXTRA_STARTUP_DEVICE_TOKEN = "startup_device_token";
     public static final String EXTRA_FORCE_STARTUP_GREETING = "force_startup_greeting";
+    public static final String EXTRA_STARTUP_LAUNCH_REASON = "startup_launch_reason";
+    public static final String EXTRA_STARTUP_REPLAY_MODE = "startup_replay_mode";
+    public static final String STARTUP_LAUNCH_REASON_BOOT = "boot";
 
     private static final int COLOR_READY = Color.rgb(67, 216, 255);
     private static final int COLOR_RECORDING = Color.rgb(255, 82, 82);
@@ -57,10 +60,15 @@ public final class MainActivity extends Activity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        if (STARTUP_LAUNCH_REASON_BOOT.equals(
+                getIntent().getStringExtra(EXTRA_STARTUP_LAUNCH_REASON))) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+                    | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
+        }
         audio = new AudioLoopbackController(this);
         gatewayClient = new BleGatewayClient(this, this);
         startupStore = new StartupGreetingStore(this);
-        startupController = new StartupGreetingController(startupStore, this);
+        startupController = new StartupGreetingController(this, startupStore, this);
         provisionStartupConfiguration(getIntent());
         setContentView(createRootContent());
         showReady();
@@ -428,7 +436,7 @@ public final class MainActivity extends Activity implements
         startupSummary.setText(R.string.startup_connecting);
         startupAttribution.setText("");
         startupLoader.start();
-        if (!startupController.start(forceStartupGreeting())) {
+        if (!startupController.start(forceStartupGreeting(), launchedFromBoot())) {
             finishStartup();
         }
     }
@@ -458,10 +466,21 @@ public final class MainActivity extends Activity implements
             intent.removeExtra(EXTRA_STARTUP_BRIDGE_URL);
             intent.removeExtra(EXTRA_STARTUP_DEVICE_TOKEN);
         }
+        String replayMode = intent.getStringExtra(EXTRA_STARTUP_REPLAY_MODE);
+        if (replayMode != null) {
+            startupStore.saveDebugReplayMode(replayMode);
+            intent.removeExtra(EXTRA_STARTUP_REPLAY_MODE);
+        }
     }
 
     private boolean forceStartupGreeting() {
-        return isDebuggable() && getIntent().getBooleanExtra(EXTRA_FORCE_STARTUP_GREETING, false);
+        return isDebuggable() && (getIntent().getBooleanExtra(EXTRA_FORCE_STARTUP_GREETING, false)
+                || (launchedFromBoot() && startupStore.debugReplayAlways()));
+    }
+
+    private boolean launchedFromBoot() {
+        return STARTUP_LAUNCH_REASON_BOOT.equals(
+                getIntent().getStringExtra(EXTRA_STARTUP_LAUNCH_REASON));
     }
 
     private boolean isDebuggable() {

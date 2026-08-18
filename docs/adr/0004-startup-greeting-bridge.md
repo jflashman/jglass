@@ -27,8 +27,25 @@ usage; no subscription is purchased or enabled by software.
 Glass and bridge share `jglass/startup/1`. The entire response is limited to 512
 KiB. Glass refuses redirects, wrong protocol/MIME/attribution, malformed
 JSON/Base64, unexpected dates, and oversized bodies. It records the local date
-only when dynamic or cached fallback playback begins. The bridge may include
-versioned fixed fallback MP3s when Glass reports them missing or stale.
+only when dynamic or bundled fallback playback begins. The bridge may include
+versioned fixed fallback MP3s when an older Glass client reports them missing or
+stale.
+
+Android `BOOT_COMPLETED` now triggers the experience. The receiver only checks
+the local daily/debug rule and schedules a wakeup Activity three seconds later;
+it does not wait, access the network, or play audio. The short delay and
+boot-only screen flags let the XE24 home timeline settle before playback. Boot
+launches have a 30-second Activity-owned deadline
+for network readiness and at most three authenticated requests. Production
+speaks once per local day. A persisted `daily|always` replay mode is accepted
+only by debuggable builds.
+
+Current APKs bundle six fixed licensed clips so the first offline boot can still
+speak. Period-specific clips distinguish confirmed Bluetooth-off from a general
+local-assistant failure; Wi-Fi, bridge, or provider failures are never
+misreported as Bluetooth failures. The legacy response field remains wire
+compatible, but current clients report `bundled-en-US-v2` and do not require
+bridge provisioning.
 
 ## Consequences
 
@@ -39,6 +56,6 @@ are revocable by clearing/overwriting the app data. Plain HTTP is acceptable
 only on the explicitly trusted LAN; away-from-home operation still requires the
 separate authenticated relay milestone.
 
-Fixed fallback audio is retained on bridge and Glass. Dynamic weather audio is
-ephemeral and deleted from Glass after playback. Normal logs exclude secrets,
-coordinates, text, and audio.
+Fixed fallback audio is packaged in Glass and may remain in the bridge's legacy
+private cache. Dynamic weather audio is ephemeral and deleted from Glass after
+playback. Normal logs exclude secrets, coordinates, text, and audio.
