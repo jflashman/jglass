@@ -31,8 +31,15 @@ been flashed and cold-booted: JGlass is now the sole system Home, while signed
 XE24 Settings remains accessible. Provider-backed dynamic weather speech still
 requires physical verification.
 
-Current milestone: measure foreground/background GATT reliability and compressed
-BLE audio throughput. The physical Glass/iPhone pair has completed the bounded
+The host-tested v0.7.1 update adds authenticated wake-phrase configuration and
+an offline cache on Glass, plus request-cancellation and JSON-parser fixes.
+The bridge defaults to `JARVIS`; voice recognition itself is not implemented.
+See the [configuration test report](docs/testing/2026-09-05-device-config.md)
+for checks and the physical resume procedure.
+
+Next implementation step: the awake-only XE24 recognizer adapter. The mobile
+gateway workstream still needs recovery and compressed BLE audio measurements.
+The physical Glass/iPhone pair has completed the bounded
 fragmented hello/ping exchange, while companion-owned HFP proved unusable for
 application audio. A bounded v0.4 reliability diagnostic now supports delayed
 connected pings and repeated rediscovery/reconnection attempts. Physical testing

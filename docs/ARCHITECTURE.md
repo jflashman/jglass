@@ -83,6 +83,14 @@ weather and ElevenLabs `mp3_22050_32` speech. Trusted-LAN binding is explicit;
 the service is not a public endpoint. Coordinates, device/provider secrets,
 voice IDs, spoken text, and audio are omitted from normal logs.
 
+The same origin serves authenticated `GET /v1/device-config` with
+`jglass/device-config/1` and one normalized wake phrase (default `JARVIS`).
+Home refreshes once per resume and retains only validated canonical configuration
+in private preferences. Re-enrollment clears it; invalid or unavailable replies
+preserve the previous value. Configuration and greeting requests share a bounded
+API-19 HTTP client with request-local cancellation state and a 12-second overall
+deadline. This is configuration plumbing only; no recognizer is started yet.
+
 ### Codex worker
 
 The Codex worker is not a general remote shell. It accepts bounded requests from the bridge, operates only in configured repositories, and returns structured status.
@@ -205,4 +213,5 @@ One-shot camera capture is predictable, private, and inexpensive. Continuous str
 
 Architecture-changing choices belong in `docs/adr/`. The startup bridge,
 reversible XE24 system branding, and JGlass-owned Home shell are recorded in
-ADRs 0004 through 0006.
+ADRs 0004 through 0006. Device configuration and its cache boundary are recorded
+in ADR 0007.

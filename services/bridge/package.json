@@ -11,6 +11,7 @@
     "generate:boot-fallbacks": "npm run build && node dist/src/generate-boot-fallbacks.js",
     "start": "node dist/src/server.js",
     "test": "npm run build && node --test --test-concurrency=1 dist/test/*.test.js",
+    "test:glass": "npm run build && node dist/test/glass-integration.js",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {

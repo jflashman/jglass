@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { pathToFileURL } from "node:url";
 import { loadConfig, type BridgeConfig } from "./config.js";
+import { deviceConfig } from "./device-config.js";
 import {
   createStartupResponse,
   FallbackStore,
@@ -57,6 +58,7 @@ function sendJson(response: ServerResponse, statusCode: number, body: unknown): 
 }
 
 export function buildServer(config: BridgeConfig, requestFetch: typeof fetch = fetch, logger: SafeLogger = console.log) {
+  const publicDeviceConfig = deviceConfig(config.wakePhrase);
   const fallbackStore = new FallbackStore(config.dataDirectory);
   return createServer(async (request, response) => {
     const started = Date.now();
@@ -67,11 +69,17 @@ export function buildServer(config: BridgeConfig, requestFetch: typeof fetch = f
         sendJson(response, statusCode, { status: "ok" });
         return;
       }
-      if (request.method !== "POST" || request.url !== "/v1/startup-greeting") {
+      const configurationRequest = request.method === "GET" && request.url === "/v1/device-config";
+      if (!configurationRequest && (request.method !== "POST" || request.url !== "/v1/startup-greeting")) {
         throw new PublicError(404, "Not found");
       }
       if (!authenticated(request, config.deviceToken)) {
         throw new PublicError(401, "Unauthorized");
+      }
+      if (configurationRequest) {
+        statusCode = 200;
+        sendJson(response, statusCode, publicDeviceConfig);
+        return;
       }
       if (request.headers["content-type"]?.split(";", 1)[0]?.trim().toLowerCase() !== "application/json") {
         throw new PublicError(415, "Content-Type must be application/json");

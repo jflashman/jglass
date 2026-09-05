@@ -1,0 +1,10 @@
+{
+  "response": {"protocol": "jglass/device-config/1", "wakePhrase": "JARVIS"},
+  "valid": [
+    {"input": "JARVIS", "expected": "JARVIS"},
+    {"input": "  hello   Jarvis  ", "expected": "HELLO JARVIS"},
+    {"input": "one two three four", "expected": "ONE TWO THREE FOUR"},
+    {"input": "abcdefghijklmnopqrstuvwxyzabcdef", "expected": "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEF"}
+  ],
+  "invalid": [null, 1, true, {}, [], "", "   ", "one two three four five", "abcdefghijklmnopqrstuvwxyzabcdefg", "Jarvis!", "JARVIS2", "JAR-VIS", "héllo", "Jarvis\n", "Jarvis\t", "Jarvis\u0000", "hello\u00a0Jarvis"]
+}

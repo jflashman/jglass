@@ -34,6 +34,7 @@ final class StartupGreetingController {
     private boolean networkFinished;
     private int requestAttempts;
     private long networkDeadline;
+    private long generation;
     private MediaPlayer player;
     private final Runnable retryNetwork = new Runnable() {
         @Override
@@ -83,6 +84,7 @@ final class StartupGreetingController {
     }
 
     private void requestGreeting(final String today) {
+        final long requestGeneration = generation;
         requestAttempts += 1;
         client.request(store.bridgeUrl(), store.deviceToken(), store.fallbackVersion(),
                 new StartupGreetingClient.Listener() {
@@ -91,7 +93,7 @@ final class StartupGreetingController {
                         main.post(new Runnable() {
                             @Override
                             public void run() {
-                                if (networkFinished) return;
+                                if (generation != requestGeneration || networkFinished) return;
                                 handleResponse(today, response);
                             }
                         });
@@ -102,7 +104,7 @@ final class StartupGreetingController {
                         main.post(new Runnable() {
                             @Override
                             public void run() {
-                                if (networkFinished) return;
+                                if (generation != requestGeneration || networkFinished) return;
                                 if (bootLaunch && active
                                         && StartupGreetingRetryPolicy.shouldRetryRequest(
                                                 requestAttempts, remainingNetworkTime())) {
@@ -132,6 +134,7 @@ final class StartupGreetingController {
     }
 
     void cancel() {
+        generation++;
         active = false;
         playbackStarted = false;
         client.cancel();

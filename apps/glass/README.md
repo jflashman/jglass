@@ -1,9 +1,16 @@
 # JGlass client
 
-The v0.7 implementation is the JGlass client and first replacement shell for the
+The v0.7.1 implementation is the JGlass client and first replacement shell for the
 physical XE24 unit. Its provider-free diagnostics remain available behind an
 opt-in JGlass Home activity and the automatic once-daily weather and speech
 experience.
+
+Version 0.7.1 adds a bounded authenticated device-configuration refresh on Home
+resume and a private offline cache for the bridge's wake phrase. It does not yet
+enable voice activation. Failed refreshes preserve the last valid configuration;
+changed enrollment clears it. It also fixes late cancelled HTTP results, limits
+JSON nesting, and restores idle status when returning after an interrupted
+greeting. See the [host checks and physical test procedure](../../docs/testing/2026-09-05-device-config.md).
 
 Baseline constraints:
 
@@ -54,8 +61,9 @@ features:
   process stops.
 
 Camera and GDK gesture semantics remain separate physical-device baseline tasks.
-The foreground GATT exchange is implemented and physically verified; background
-wake and reconnect behavior still require physical verification.
+The foreground GATT exchange and maintained-connection wake under iPhone lock
+are physically verified. Background rediscovery failed on the tested pair;
+interruption and manual-relaunch recovery remain unverified.
 
 Morning is 05:00–11:59, afternoon 12:00–17:59, and evening 18:00–04:59 in the
 Glass local timezone. The date is recorded only when dynamic or bundled fallback

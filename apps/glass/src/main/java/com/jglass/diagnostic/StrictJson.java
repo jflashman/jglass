@@ -5,8 +5,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Small dependency-free JSON reader used by the API-19 startup protocol. */
+/** Small dependency-free JSON reader used by the API-19 bridge protocols. */
 final class StrictJson {
+    private static final int MAX_DEPTH = 32;
     static final class ParseException extends Exception {
         ParseException(String message) {
             super(message);
@@ -15,6 +16,7 @@ final class StrictJson {
 
     private final String source;
     private int position;
+    private int depth;
 
     private StrictJson(String source) {
         this.source = source;
@@ -36,8 +38,12 @@ final class StrictJson {
             throw error("Unexpected end of JSON");
         }
         char next = source.charAt(position);
-        if (next == '{') return readObject();
-        if (next == '[') return readArray();
+        if (next == '{' || next == '[') {
+            if (depth >= MAX_DEPTH) throw error("JSON nesting limit exceeded");
+            depth++;
+            try { return next == '{' ? readObject() : readArray(); }
+            finally { depth--; }
+        }
         if (next == '"') return readString();
         if (next == 't') return readLiteral("true", Boolean.TRUE);
         if (next == 'f') return readLiteral("false", Boolean.FALSE);

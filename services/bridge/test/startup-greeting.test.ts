@@ -23,6 +23,7 @@ function config(dataDirectory: string): BridgeConfig {
     bindHost: "127.0.0.1",
     port: 8787,
     deviceToken: secret.repeat(3),
+    wakePhrase: "JARVIS",
     elevenLabsApiKey: secret,
     elevenLabsVoiceId: "licensed_voice",
     elevenLabsModelId: "eleven_flash_v2_5",

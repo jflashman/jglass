@@ -2,6 +2,9 @@
 
 Last verified: 2026-08-18.
 
+Host implementation updated: 2026-09-05. The physical baseline below remains
+the 2026-08-18 result.
+
 This document captures the relevant state from the conversation that created JGlass so a future Codex task can continue without access to that conversation.
 
 ## Ownership and scope
@@ -248,13 +251,73 @@ This is recovery context, not permission to flash again. Never perform destructi
 - Prefer that Kali machine for future bootloader operations.
 - Do not interpret a black Glass screen alone as proof of Fastboot; verify with `fastboot devices` and `fastboot getvar product`. Expected product: `glass_1`.
 
+## Stock XE24 voice-service investigation
+
+A read-only inspection of the connected XE24 unit confirmed that removing the
+stock Home did not remove Google's voice stack. `com.google.glass.voice` remains
+installed as a persistent privileged package, and its exported
+`VoiceCommandService` and underlying `VoiceService` remain available. The voice
+process was idle at the sampled moment; this is not yet a battery measurement.
+
+Static inspection of the owner-supplied on-device XE24 artifacts established
+the following implementation facts, but custom-phrase recognition has not yet
+been exercised on the physical device:
+
+- `glass-core.jar` exposes `VoiceCommandClient`, whose command literals are
+  converted by `GlassVoice.apk` into a runtime `VoiceConfig` and compiled by the
+  installed Google recognizer. This is the first implementation path for the
+  configurable `JARVIS` phrase.
+- `OkayGlassClient` accepts an arbitrary guard-phrase value internally, but its
+  match handler plays a built-in sound effect and stops listening. JGlass will
+  use the lower command client so activation can be silent and later preserve a
+  continuous spoken utterance.
+- The underlying service has a resampled-audio listener callback carrying
+  8 kHz, mono, 16-bit PCM while recognition is active. This is a promising
+  future path for retaining the words immediately following the wake phrase
+  without opening a competing `AudioRecord`; it is explicitly outside the
+  detection-only next slice.
+- Stock Settings still contains the head-wake controls. JGlass will rely on
+  that system behavior and run custom phrase detection only while the display
+  is awake, rather than attempting an always-on microphone mode.
+
+The agreed first user experience is: head-wake or tap, say `JARVIS`, receive no
+chime, and see a minimal `JARVIS` / `Activated` assistant card. It dismisses on
+swipe-down/Back or returns Home after three seconds. The phrase is supplied by
+authenticated bridge setup and cached locally; `OK Glass` must not activate
+JGlass. No Google binary, model, decompiled source, or patched system image will
+be committed. If the installed interface fails on hardware, preserve normal
+Home behavior and gather evidence before considering a separately authorized
+system modification.
+
+## Configuration groundwork implemented on 2026-09-05
+
+Version 0.7.1 adds authenticated bridge device configuration, strict shared
+English-phrase validation, and a private offline cache. Home attempts one
+bounded refresh per resume. An invalid/unavailable reply preserves the last
+valid phrase; changed enrollment clears it. No recognizer adapter or activation
+card is implemented yet, so fetching `JARVIS` does not enable listening.
+
+Startup and configuration now share request-local cancellation state, exact
+response-length checks, and an overall deadline. Queued startup callbacks are
+also guarded against a subsequent session. The JSON reader limits nesting, and
+returning Home after an interrupted greeting restores idle status.
+The startup loader reuses its drawing arrays and bounds to avoid eight object
+allocations per frame; physical performance has not been measured.
+
+Host tests, Android lint, and APK assembly are documented in
+[`testing/2026-09-05-device-config.md`](testing/2026-09-05-device-config.md).
+ADB found no attached device; Joshua confirmed it needed charging. This update
+was not installed or physically verified.
+
 ## Product vision
 
 Joshua wants a fun, hackable daily-use device with three connected capabilities.
 
 ### Voice-and-vision assistant
 
-- Voice activated, with push-to-talk or native Glass activation first and an always-on wake word later if battery permits.
+- Voice activated, with push-to-talk and an awake-only configurable phrase using
+  the installed Glass recognizer first; screen-off activation remains a later
+  experiment only if battery measurements justify it.
 - Conversational intelligence through current OpenAI APIs.
 - Intentional visual context from the Glass camera.
 - Spoken responses through ElevenLabs using an original licensed voice with a polished, understated science-fiction-assistant character. Do not clone or impersonate a recognizable actor without rights and consent.
@@ -313,13 +376,17 @@ Several of the most attractive repositories have no declared license. Their beha
   image. Do not root or live-remount the device for branding.
 - Use a minimal Node/TypeScript trusted-LAN startup bridge with Open-Meteo and
   ElevenLabs before broad assistant orchestration.
+- Reuse the installed XE24 voice recognizer for the first awake-only custom
+  phrase. Configure it through the authenticated bridge, cache the last valid
+  phrase on Glass, and begin with `JARVIS`.
 
 ## Questions still open
 
 - Whether later bridge workloads justify splitting the implemented TypeScript
   service from a separate speech worker.
 - Which audio codec gives acceptable latency and API 19 compatibility.
-- Whether XE24's native speech recognizer remains dependable without retired Google services.
+- Whether XE24's native runtime grammar reliably recognizes `JARVIS` at the
+  required latency and false-activation rate on the physical device.
 - Whether the Glass Android 4.4 BLE stack can maintain a reliable authorized ANCS session with the owner's current iPhone.
 - Which relay design can support use away from home without depending on modern TLS libraries on Glass.
 - Whether a connected iPhone BLE peripheral service remains usable and can be
