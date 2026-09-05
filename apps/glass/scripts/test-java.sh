@@ -28,6 +28,9 @@ fi
     "$glass_dir/src/main/java/com/jglass/diagnostic/BleControlFraming.java" \
     "$glass_dir/src/main/java/com/jglass/diagnostic/GatewayProbeCoordinator.java" \
     "$glass_dir/src/main/java/com/jglass/diagnostic/StrictJson.java" \
+    "$glass_dir/src/main/java/com/jglass/diagnostic/BridgeJsonClient.java" \
+    "$glass_dir/src/main/java/com/jglass/diagnostic/DeviceConfigProtocol.java" \
+    "$glass_dir/src/main/java/com/jglass/diagnostic/DeviceConfigCache.java" \
     "$glass_dir/src/main/java/com/jglass/diagnostic/Base64Codec.java" \
     "$glass_dir/src/main/java/com/jglass/diagnostic/StartupGreetingRules.java" \
     "$glass_dir/src/main/java/com/jglass/diagnostic/StartupGreetingRetryPolicy.java" \
@@ -36,7 +39,9 @@ fi
     "$glass_dir/src/testsupport/java/com/jglass/diagnostic/BleAdvertisementMatcherSelfTest.java" \
     "$glass_dir/src/testsupport/java/com/jglass/diagnostic/BleControlFramingSelfTest.java" \
     "$glass_dir/src/testsupport/java/com/jglass/diagnostic/GatewayProbeCoordinatorSelfTest.java" \
-    "$glass_dir/src/testsupport/java/com/jglass/diagnostic/StartupGreetingProtocolSelfTest.java"
+    "$glass_dir/src/testsupport/java/com/jglass/diagnostic/StartupGreetingProtocolSelfTest.java" \
+    "$glass_dir/src/testsupport/java/com/jglass/diagnostic/DeviceConfigSelfTest.java" \
+    "$glass_dir/src/testsupport/java/com/jglass/diagnostic/BridgeJsonClientSelfTest.java"
 
 "$java_home/bin/java" -cp "$test_classes" com.jglass.diagnostic.BoundedPcmBufferSelfTest
 "$java_home/bin/java" -cp "$test_classes" com.jglass.diagnostic.BleAdvertisementMatcherSelfTest
@@ -44,3 +49,6 @@ fi
 "$java_home/bin/java" -cp "$test_classes" com.jglass.diagnostic.GatewayProbeCoordinatorSelfTest
 "$java_home/bin/java" -cp "$test_classes" com.jglass.diagnostic.StartupGreetingProtocolSelfTest \
     "$glass_dir/../../packages/protocol/fixtures/startup-greeting/success-with-fallbacks.json"
+"$java_home/bin/java" -cp "$test_classes" com.jglass.diagnostic.DeviceConfigSelfTest \
+    "$glass_dir/../../packages/protocol/fixtures/device-config/cases.json"
+"$java_home/bin/java" -cp "$test_classes" com.jglass.diagnostic.BridgeJsonClientSelfTest "$@"

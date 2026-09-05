@@ -12,8 +12,9 @@ The roadmap is ordered to produce a usable vertical slice before adding difficul
   provider-backed physical XE24 run.
 - [ ] Verify Bluetooth Classic and BLE behavior with minimal diagnostic slices.
   Classic pairing, profile-state reporting, foreground application BLE service
-  discovery, and a fragmented GATT hello/ping round trip are verified; reconnect
-  behavior remains unverified.
+  discovery, and a fragmented GATT hello/ping round trip are verified. Maintained
+  connections survive lock; background rediscovery failed on the tested pair.
+  Interruption and relaunch recovery remain unverified.
 - [x] Select and document the Android build toolchain that can reliably target API 19.
 - [x] Select Node 22+ / TypeScript with built-in HTTP/fetch for the initial bridge.
 - [x] Create repeatable build, lint, and test commands.
@@ -104,6 +105,55 @@ routing and reconnection limitations are documented from physical tests.
 - [ ] Replace the diagnostic assistant entry with the production push-to-talk
   conversation surface.
 
+### Next slice: stock XE24 custom wake phrase
+
+Use Google's installed XE24 recognizer rather than adding a second wake engine.
+The first configured phrase is `JARVIS`; activation is deliberately limited to
+the period after tap/head-wake has turned on the display.
+
+- [x] Add authenticated `GET /v1/device-config` with protocol version 1 and a
+  bridge-configured `wakePhrase`. Validate one to four English words (32
+  characters maximum), and cache the last valid configuration on Glass for
+  offline use.
+  Implemented in v0.7.1 with shared validation fixtures, bounded requests, and
+  cache invalidation on re-enrollment. Host-verified; physical tests pending.
+- [ ] Add an isolated API-19 adapter that reflectively invokes the installed
+  `VoiceCommandClient` and `VoiceCommand` classes. Do not bundle Google APKs,
+  framework JARs, recognizer assets, decompiled output, or patched images.
+- [ ] Start recognition only while JGlass Home is foreground and the display is
+  awake; stop on screen-off, pause, and destruction. Add bounded recovery for
+  service disconnects without making Home depend on voice availability.
+- [ ] Register only the configured phrase. Do not use `OkayGlassClient`: the
+  inspected XE24 implementation forces a sound effect and stops listening after
+  a match, which conflicts with silent activation and the later continuous
+  utterance path.
+- [ ] On a match, silently open a minimal `JARVIS` / `Activated` assistant card.
+  Swipe-down/Back dismisses it immediately; otherwise it returns Home after
+  three seconds. This slice does not record, transcribe, contact providers, or
+  retain audio.
+- [ ] Add host tests for configuration authentication/bounds, phrase
+  normalization and cache rollback, recognizer lifecycle/disconnect behavior,
+  duplicate callbacks, and assistant-card dismissal.
+  Configuration/cache and HTTP cancellation tests are complete; recognizer and
+  assistant-card lifecycle tests await those implementations.
+- [ ] Physically verify at least 18/20 quiet-room `JARVIS` detections within two
+  seconds, 0/20 detections for `OK Glass`, and no false activation during a
+  30-minute normal-room observation. Verify cached offline use, phrase changes,
+  cold boot, head-wake, Settings access, and crash recovery.
+- [ ] Compare screen-off battery, temperature, CPU, and audio-record state with
+  the current Home build. Require no persistent screen-off recording or
+  material idle-drain regression before proceeding.
+- [ ] Record the stock-service dependency and reverse-engineering boundary in
+  an ADR and add a dated physical test report. Keep the stock voice service and
+  official rollback path intact; do not flash or patch `/system` unless later
+  evidence establishes a need and the active task explicitly authorizes it.
+
+After this slice passes, add uninterrupted command capture for utterances such
+as `JARVIS, what's the weather?`, ending on trailing silence or tap and
+cancelling on swipe-down. The inspected stock service's resampled-audio callback
+is the preferred path to investigate so JGlass does not compete for a second
+microphone session.
+
 Acceptance: on a trusted LAN, ask a spoken question and hear/see the response on Glass without storing credentials on the device.
 
 ## Milestone 2: Intentional vision
@@ -150,7 +200,7 @@ Acceptance: use the assistant away from the home LAN without exposing raw SSH, V
 
 ## Later experiments
 
-- Wake-word detection after battery profiling.
+- Screen-off or always-on wake-word detection only after battery profiling.
 - Navigation and location cards.
 - Dedicated desktop viewport or read-only VNC.
 - Offline speech fallback.

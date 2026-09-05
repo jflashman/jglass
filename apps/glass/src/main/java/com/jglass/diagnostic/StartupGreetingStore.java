@@ -10,11 +10,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 
 final class StartupGreetingStore {
     private static final String PREFERENCES = "startup_greeting";
     private static final String KEY_BRIDGE_URL = "bridge_url";
     private static final String KEY_DEVICE_TOKEN = "device_token";
+    private static final String KEY_DEVICE_CONFIG = "device_config";
     private static final String KEY_LAST_DATE = "last_greeting_date";
     private static final String KEY_LEGACY_FALLBACK_VERSION = "fallback_version";
     private static final String KEY_DEBUG_REPLAY_MODE = "debug_replay_mode";
@@ -37,14 +39,35 @@ final class StartupGreetingStore {
 
     boolean saveConfiguration(String bridgeUrl, String deviceToken) {
         if (!StartupGreetingClient.isSafeBridgeBaseUrl(bridgeUrl)
-                || deviceToken == null || deviceToken.length() < 32 || deviceToken.length() > 512) {
+                || !BridgeJsonClient.isSafeToken(deviceToken)) {
             return false;
         }
-        preferences.edit()
+        SharedPreferences.Editor editor = preferences.edit();
+        if (!bridgeUrl.equals(bridgeUrl()) || !deviceToken.equals(deviceToken())) {
+            editor.remove(KEY_DEVICE_CONFIG);
+        }
+        editor
                 .putString(KEY_BRIDGE_URL, bridgeUrl)
                 .putString(KEY_DEVICE_TOKEN, deviceToken)
                 .apply();
         return true;
+    }
+
+    DeviceConfigCache deviceConfigCache() {
+        return new DeviceConfigCache(new DeviceConfigCache.Storage() {
+            private final Charset utf8 = Charset.forName("UTF-8");
+
+            @Override public byte[] read() {
+                String value = preferences.getString(KEY_DEVICE_CONFIG, null);
+                return value == null ? null : value.getBytes(utf8);
+            }
+
+            @Override public boolean write(byte[] json) {
+                // Same atomic preference file as enrollment; never persist the raw response.
+                preferences.edit().putString(KEY_DEVICE_CONFIG, new String(json, utf8)).apply();
+                return true;
+            }
+        });
     }
 
     String bridgeUrl() {

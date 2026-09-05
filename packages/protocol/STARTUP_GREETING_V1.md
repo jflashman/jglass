@@ -32,3 +32,10 @@ limited to 256 KiB and each fallback clip to 128 KiB before Base64 encoding.
 Glass rejects malformed JSON or Base64, wrong protocol/MIME/attribution, an
 unexpected bridge date, redirects, and over-limit bodies. Bridge and Glass use
 the same configured/local timezone; v1 intentionally sends no coordinates.
+
+As of Glass 0.7.1, the shared HTTP client requires HTTP 200 and an exact positive
+`Content-Length` within the response limit. Missing, truncated, or mismatched
+lengths fail closed. Each request has a 12-second overall deadline in addition
+to the 4-second connection and 8-second socket-read timeouts. Cancelled requests
+cannot deliver results into a later session. JSON container nesting is limited
+to 32; normal response structure is well below that bound.

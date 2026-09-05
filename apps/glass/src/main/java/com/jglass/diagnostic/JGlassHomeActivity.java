@@ -43,6 +43,7 @@ public final class JGlassHomeActivity extends Activity
 
     private StartupGreetingStore startupStore;
     private StartupGreetingController startupController;
+    private DeviceConfigController deviceConfigController;
     private TextView clockView;
     private TextView dateView;
     private TextView statusView;
@@ -57,6 +58,7 @@ public final class JGlassHomeActivity extends Activity
         super.onCreate(savedInstanceState);
         startupStore = new StartupGreetingStore(this);
         startupController = new StartupGreetingController(this, startupStore, this);
+        deviceConfigController = new DeviceConfigController(startupStore);
         newBootSession = startupStore.claimNewBootSession();
         setContentView(createContent());
         showIdle();
@@ -68,9 +70,12 @@ public final class JGlassHomeActivity extends Activity
         resumed = true;
         main.removeCallbacks(refreshClock);
         refreshClock.run();
+        deviceConfigController.refresh();
         if (!greetingAttempted) {
             greetingAttempted = true;
             startGreeting();
+        } else {
+            showIdle();
         }
     }
 
@@ -80,12 +85,14 @@ public final class JGlassHomeActivity extends Activity
         main.removeCallbacks(refreshClock);
         main.removeCallbacks(restoreIdle);
         startupController.cancel();
+        deviceConfigController.cancel();
         super.onPause();
     }
 
     @Override
     protected void onDestroy() {
         startupController.cancel();
+        deviceConfigController.cancel();
         super.onDestroy();
     }
 

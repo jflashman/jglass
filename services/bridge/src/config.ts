@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import { normalizeWakePhrase } from "./device-config.js";
 
 export interface SpeechConfig {
   elevenLabsApiKey: string;
@@ -10,6 +11,7 @@ export interface BridgeConfig extends SpeechConfig {
   bindHost: string;
   port: number;
   deviceToken: string;
+  wakePhrase: string;
   weatherLatitude: number;
   weatherLongitude: number;
   timeZone: string;
@@ -62,8 +64,8 @@ function validTimeZone(value: string): boolean {
 
 export function loadConfig(environment: NodeJS.ProcessEnv = process.env): BridgeConfig {
   const token = required(environment, "JGLASS_DEVICE_TOKEN");
-  if (token.length < 32) {
-    throw new Error("JGLASS_DEVICE_TOKEN must contain at least 32 characters");
+  if (token.length < 32 || token.length > 512 || /[^\x21-\x7e]/.test(token)) {
+    throw new Error("JGLASS_DEVICE_TOKEN must contain 32 through 512 printable ASCII characters without spaces");
   }
 
   const speech = loadSpeechConfig(environment);
@@ -87,6 +89,7 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): Bridge
     bindHost,
     port,
     deviceToken: token,
+    wakePhrase: normalizeWakePhrase(environment.JGLASS_WAKE_PHRASE ?? "JARVIS"),
     ...speech,
     weatherLatitude: coordinate(environment, "JGLASS_WEATHER_LATITUDE", -90, 90),
     weatherLongitude: coordinate(environment, "JGLASS_WEATHER_LONGITUDE", -180, 180),

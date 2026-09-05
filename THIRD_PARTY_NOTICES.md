@@ -12,6 +12,10 @@ APK.
 Repository links in planning documents are references and do not indicate that
 their code has been incorporated.
 
+The 2026-09-05 device-configuration and HTTP-transport changes are original
+project code using Java/Android and Node standard libraries. They add no
+third-party dependency, Google binary, recognizer asset, or adapted source.
+
 ## ElevenLabs startup fallback speech
 
 - Provider: https://elevenlabs.io/
@@ -47,6 +51,8 @@ their code has been incorporated.
 - Modifications: reimplemented with dependency-free Android `Canvas` and Java2D;
   simplified SVG masks into stroked arcs, added explicit counter-rotation,
   scaled for 640×360, removed hover behavior, and added original JGlass text.
+  On 2026-09-05, reused the existing arc arrays and drawing bounds to remove
+  per-frame allocations; geometry and animation timing are unchanged.
 - Verification date: 2026-08-18
 
 ## Open-Meteo weather data

@@ -34,7 +34,11 @@ import android.view.View;
 final class StartupLoaderView extends View {
     private static final int CYAN = Color.rgb(0, 255, 255);
     private static final int YELLOW = Color.rgb(255, 255, 0);
+    private static final float[] OUTER_ARCS = {101, 38, 151, 25, 198, 54, 270, 31, 311, 13, 340, 40};
+    private static final float[] MIDDLE_ARCS = {239, 143, 72, 72};
+    private static final float[] INNER_ARCS = {214, 112, 34, 112};
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final RectF bounds = new RectF();
     private boolean running;
     private long startedAt;
 
@@ -72,15 +76,15 @@ final class StartupLoaderView extends View {
 
         drawSegmentedRing(canvas, centerX, centerY, 82f * scale, 4f * scale,
                 alternatingDegrees(elapsed, 7000L, 1), CYAN,
-                new float[] {101, 38, 151, 25, 198, 54, 270, 31, 311, 13, 340, 40});
+                OUTER_ARCS);
         drawArc(canvas, centerX, centerY, 69f * scale, 315f,
                 alternatingDegrees(elapsed, 3000L, -1), YELLOW, 1.4f * scale);
         drawSegmentedRing(canvas, centerX, centerY, 55f * scale, 5f * scale,
                 alternatingDegrees(elapsed, 4000L, -1), CYAN,
-                new float[] {239, 143, 72, 72});
+                MIDDLE_ARCS);
         drawSegmentedRing(canvas, centerX, centerY, 43f * scale, 1.2f * scale,
                 alternatingDegrees(elapsed, 4000L, 1), CYAN,
-                new float[] {214, 112, 34, 112});
+                INNER_ARCS);
         drawArc(canvas, centerX, centerY, 16f * scale, 318f,
                 alternatingDegrees(elapsed, 2000L, 1), YELLOW, 2f * scale);
         paint.setColor(CYAN);
@@ -94,7 +98,7 @@ final class StartupLoaderView extends View {
             float radius, float width, float rotation, int color, float[] arcs) {
         paint.setColor(color);
         paint.setStrokeWidth(width);
-        RectF bounds = new RectF(centerX - radius, centerY - radius,
+        bounds.set(centerX - radius, centerY - radius,
                 centerX + radius, centerY + radius);
         canvas.save();
         canvas.rotate(rotation, centerX, centerY);
@@ -108,7 +112,7 @@ final class StartupLoaderView extends View {
             float sweep, float rotation, int color, float width) {
         paint.setColor(color);
         paint.setStrokeWidth(width);
-        RectF bounds = new RectF(centerX - radius, centerY - radius,
+        bounds.set(centerX - radius, centerY - radius,
                 centerX + radius, centerY + radius);
         canvas.save();
         canvas.rotate(rotation, centerX, centerY);

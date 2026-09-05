@@ -13,7 +13,10 @@ Set these uncommitted environment values:
 - optional `ELEVENLABS_MODEL_ID` (default `eleven_flash_v2_5`);
 - `JGLASS_WEATHER_LATITUDE`, `JGLASS_WEATHER_LONGITUDE`, and an IANA
   `JGLASS_TIME_ZONE`;
-- a random `JGLASS_DEVICE_TOKEN` of at least 32 characters;
+- a random `JGLASS_DEVICE_TOKEN` of 32–512 printable ASCII characters without spaces;
+- optional `JGLASS_WAKE_PHRASE` (default `JARVIS`): one to four ASCII-letter words,
+  at most 32 characters after space normalization; invalid explicit values
+  prevent startup;
 - optional `JGLASS_BIND_HOST` (loopback by default), `JGLASS_PORT` (8787), and
   ignored `JGLASS_DATA_DIRECTORY`.
 
@@ -44,6 +47,10 @@ npm run build
 node dist/src/server.js
 ```
 
+With the existing Glass Java toolchain available, `npm run test:glass` also
+checks the real Java HTTP client against a temporary Node loopback server.
+It uses synthetic credentials and makes no provider calls.
+
 Generate the six licensed boot fallback assets after sourcing the ignored
 environment and before building the release APK. This command requires only the
 three `ELEVENLABS_*` values; weather and device configuration are not involved:
@@ -62,6 +69,10 @@ operator decision, for example `JGLASS_BIND_HOST=192.0.2.10`; do not bind to
 Glass/client subnet in the host firewall.
 
 `GET /health` returns non-sensitive process health. Authenticated
+`GET /v1/device-config` returns only the protocol and normalized phrase, with no
+provider calls; it follows
+[`device configuration v1`](../../packages/protocol/DEVICE_CONFIG_V1.md).
+Restart the bridge after changing its environment configuration. Authenticated
 `POST /v1/startup-greeting` follows
 [`../../packages/protocol/STARTUP_GREETING_V1.md`](../../packages/protocol/STARTUP_GREETING_V1.md).
 Requests are bounded and timed out, redirects are rejected, and response audio
